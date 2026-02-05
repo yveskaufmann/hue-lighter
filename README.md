@@ -159,6 +159,11 @@ The project includes a `.vscode/launch.json` file for easy debugging in Visual S
 
 See the architecture diagrams and sequence flows in [docs/architecture.md](docs/architecture.md).
 
+## Supported Platforms
+
+- **Linux with `systemd`:** The project installs a systemd unit and uses systemd lifecycle hooks (start/stop) for graceful shutdown and service management. The default paths are configured for Linux (`/etc/hue-lighter/`, `/usr/bin/hue-lighter`).
+- **Docker:** The application can be containerized. If running in a container, mount your `configs/config.yaml` and provide the CA bundle via `HUE_CA_CERTS_PATH` or a bind mount. Be aware that systemd-specific features (ExecStop, unit files) will not behave the same inside containers.
+
 ## License
 
 This project is released under the MIT License — see the [LICENSE](LICENSE) file for details.
