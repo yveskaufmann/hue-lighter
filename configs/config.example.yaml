@@ -1,0 +1,20 @@
+meta:
+  version: 1
+  name: "Hue Lighter Automation"
+  description: "Configuration for Hue Lighter Automation"
+location:
+  # Your geographic location for sunset/sunrise calculation.
+  # Replace with your actual coordinates.
+  # You can find your coordinates using Google Maps or similar services.
+  latitude: 52.5200000
+  longitude: 13.4050000
+lights:
+  # Add each light you want to automate here.
+  # You can find the ID of your lights in the Philips Hue app
+  # under Settings > Lights > (Select a light) > Info.
+  # 
+  # Example:
+  - id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    name: "Office Hue Play Left"
+  - id: "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy"
+    name: "Office Hue Play Right"

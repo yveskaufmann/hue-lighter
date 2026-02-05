@@ -1,0 +1,16 @@
+[Unit]
+Description=Hue Lighter Service
+After=network.target
+Before=shutdown.target reboot.target poweroff.target
+
+[Service]
+Type=simple
+Environment=CONFIG_PATH=/etc/hue-lighter/config.yaml
+ExecStart=/usr/bin/hue-lighter
+ExecStop=/usr/bin/hue-lighter --shutdown
+RemainAfterExit=yes
+User=hue-lighter
+TimeoutStopSec=90
+
+[Install]
+WantedBy=multi-user.target

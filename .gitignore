@@ -1,0 +1,3 @@
+bin/
+configs/config.yaml
+configs/certs/cacert_bundle.pem

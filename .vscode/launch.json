@@ -1,0 +1,41 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Start Hue Lighter",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cmd/hue-lighter/main.go",
+      "env": {
+        "CONFIG_PATH": "${workspaceFolder}/configs/config.yaml",
+        "HUE_CA_CERTS_PATH": "${workspaceFolder}/configs/certs/cacert_bundle.pem",
+        "HUE_API_KEY_STORE_PATH": "${env:HOME}/.hue-lighter/api-keys.json"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "openOnFirstSessionStart"
+    },
+    {
+      "name": "Stop Hue Lighter",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "args": [
+        "--shutdown"
+      ],
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/cmd/hue-lighter/main.go",
+      "env": {
+        "CONFIG_PATH": "${workspaceFolder}/configs/config.yaml",
+        "HUE_CA_CERTS_PATH": "${workspaceFolder}/configs/certs/cacert_bundle.pem",
+        "HUE_API_KEY_STORE_PATH": "${env:HOME}/.hue-lighter/api-keys.json"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "openOnFirstSessionStart"
+    }
+  ]
+}
