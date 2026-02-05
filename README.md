@@ -154,3 +154,8 @@ The `hue-lighter.service` is configured with an `ExecStop` command that sends a 
     ```
 
 The project includes a `.vscode/launch.json` file for easy debugging in Visual Studio Code.
+
+## License
+
+This project is released under the MIT License — see the [LICENSE](LICENSE) file for details.
+
