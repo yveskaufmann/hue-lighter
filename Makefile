@@ -1,6 +1,6 @@
 .SHELL = /usr/bin/env bash
 
-.PHONY: all build clean test fmt lint
+.PHONY: all build clean test test-coverage test-race fmt lint
 
 all: build
 
@@ -12,6 +12,15 @@ clean:
 
 test:
 	go test ./...
+
+test-coverage:
+	go test -cover ./...
+
+test-race:
+	go test -race ./...
+
+test-verbose:
+	go test -v ./...
 
 fmt:
 	go fmt ./...
