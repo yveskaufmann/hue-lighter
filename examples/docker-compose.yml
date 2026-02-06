@@ -1,0 +1,15 @@
+services:
+  hue-lighter:
+    build: 
+      context: ..
+      dockerfile: examples/containerized/Dockerfile
+    container_name: hue-lighter
+    restart: unless-stopped
+    network_mode: "host" # allows access to local Hue bridge on LAN
+    volumes:
+      - ../configs/config.yaml:/etc/hue-lighter/config.yaml:ro
+      - ../configs/certs/cacert_bundle.pem:/etc/hue-lighter/cacert_bundle.pem:ro
+      - /var/lib/hue-lighter
+    environment:
+      - CONFIG_PATH=/etc/hue-lighter/config.yaml
+      - HUE_CA_CERTS_PATH=/etc/hue-lighter/cacert_bundle.pem
