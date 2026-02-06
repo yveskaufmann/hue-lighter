@@ -1,6 +1,11 @@
+
 # Hue Lighter
 
 Hue Lighter is a small automation tool for managing Philips Hue lights, specifically designed to automate the backlighting of a desktop PC. It intelligently turns lights on at sunset, off at sunrise, and ensures they are turned off gracefully when the machine shuts down.
+
+## Motivation
+
+While Philips Hue already offers sunset and sunrise automation, I found it frustrating that my backlights would turn on even when I wasn't at my desk. I also wanted the lights to turn off automatically when I shut down my PC. This project was a fun side quest to solve those problems and experiment with automation beyond the built-in Hue features.
 
 ## Features
 
