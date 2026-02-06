@@ -150,7 +150,7 @@ func (d *BridgeDiscoveryService) fetchBridgesByDiscoverEndpoint() ([]*DiscoverBr
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("discovery request failed with status code: %w", resp.StatusCode)
+		return nil, fmt.Errorf("discovery request failed with status code: %v", resp.StatusCode)
 	}
 
 	var result []*DiscoverBridgeResult
