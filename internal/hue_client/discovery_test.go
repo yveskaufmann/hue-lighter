@@ -87,7 +87,7 @@ func TestBridgeDiscoveryService_fetchBridgesByDiscoverEndpoint(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
-				
+
 				if tt.statusCode == http.StatusOK {
 					json.NewEncoder(w).Encode(tt.serverResponse)
 				} else {
@@ -102,10 +102,10 @@ func TestBridgeDiscoveryService_fetchBridgesByDiscoverEndpoint(t *testing.T) {
 			// Note: In real code, fetchBridgesByDiscoverEndpoint is not exported
 			// This test demonstrates the pattern - in practice we'd test through public methods
 			// For this test, we're testing the logic through the integration test below
-			
+
 			// Simulate the behavior by making a direct HTTP request
 			resp, err := http.Get(server.URL)
-			
+
 			if tt.wantErr {
 				if err == nil && resp.StatusCode != http.StatusOK {
 					// Expected behavior - non-OK status
@@ -188,7 +188,7 @@ func TestBridgeDiscoveryService_fetchBridgeConfigByIP(t *testing.T) {
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
-				
+
 				if tt.statusCode == http.StatusOK {
 					switch v := tt.serverResponse.(type) {
 					case string:
@@ -246,11 +246,11 @@ func TestBridgeDiscoveryService_DiscoverFirstBridge(t *testing.T) {
 		// Note: DiscoverFirstBridge relies on DiscoverBridges which uses mDNS
 		// In a real test environment, we'd need to mock the mDNS discovery
 		// For now, we test that the function exists and has the right signature
-		
+
 		// This would fail in test environment since there's no actual bridge
 		// but demonstrates the test pattern
 		_, err := service.DiscoverFirstBridge(logger)
-		
+
 		// We expect an error in test environment (no real bridge)
 		// In a real implementation, we'd mock the discovery mechanism
 		assert.Error(t, err)
@@ -261,7 +261,7 @@ func TestBridgeDiscoveryService_DiscoverFirstBridge(t *testing.T) {
 		service := NewBridgeDiscoveryService(logger)
 
 		_, err := service.DiscoverFirstBridge(logger)
-		
+
 		// Should return error when no bridges found
 		assert.Error(t, err)
 	})
@@ -271,14 +271,14 @@ func TestBridgeDiscoveryService_DiscoverBridges_HTTPFallback(t *testing.T) {
 	t.Run("falls back to HTTP discovery when mDNS fails", func(t *testing.T) {
 		// This test verifies the fallback behavior
 		// In real implementation, mDNS would fail and fall back to HTTP
-		
+
 		logger := logrus.New().WithField("test", "http-fallback")
 		service := NewBridgeDiscoveryService(logger)
 
 		// DiscoverBridges will try mDNS first, then fall back to HTTP
 		// In test environment without real bridges, this will attempt HTTP fallback
 		_, err := service.DiscoverBridges()
-		
+
 		// We expect an error since there's no real discovery endpoint in test
 		// This demonstrates the test pattern
 		assert.Error(t, err)
@@ -367,7 +367,7 @@ func TestBridgeDiscoveryService_Integration(t *testing.T) {
 		// This demonstrates the test pattern for integration testing
 		logger := logrus.New().WithField("test", "integration")
 		service := NewBridgeDiscoveryService(logger)
-		
+
 		// Verify service was created
 		assert.NotNil(t, service)
 		assert.NotNil(t, service.logger)

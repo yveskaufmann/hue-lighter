@@ -207,7 +207,7 @@ func TestNewFormatter(t *testing.T) {
 
 			formatter := newFormatter()
 			require.NotNil(t, formatter)
-			
+
 			if tt.validateTemplate != nil {
 				tt.validateTemplate(t, formatter)
 			}
@@ -236,12 +236,12 @@ func TestNewLogger_WithEnvironmentVariables(t *testing.T) {
 	t.Run("respects both LOG_LEVEL and LOG_FORMAT", func(t *testing.T) {
 		cleanupLevel := testutils.SetEnv(t, "LOG_LEVEL", "warn")
 		defer cleanupLevel()
-		
+
 		cleanupFormat := testutils.SetEnv(t, "LOG_FORMAT", "json")
 		defer cleanupFormat()
 
 		logger := NewLogger()
-		
+
 		assert.Equal(t, log.WarnLevel, logger.Logger.Level)
 		_, ok := logger.Logger.Formatter.(*log.JSONFormatter)
 		assert.True(t, ok, "Expected JSONFormatter")
@@ -282,7 +282,7 @@ func TestNewLogger_Integration(t *testing.T) {
 
 		logger := NewLogger()
 		assert.Equal(t, log.DebugLevel, logger.Logger.Level)
-		
+
 		// Should not panic
 		logger.Debug("This debug message should be visible")
 	})
@@ -321,7 +321,7 @@ func TestLogging_ConcurrentAccess(t *testing.T) {
 		os.Unsetenv("LOG_FORMAT")
 
 		done := make(chan bool, 10)
-		
+
 		for i := 0; i < 10; i++ {
 			go func() {
 				logger := NewLogger()

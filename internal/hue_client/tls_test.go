@@ -93,14 +93,14 @@ func TestNewBridgeTLSConfig(t *testing.T) {
 			bridgeID: "test-bridge-123",
 			setupCert: func(t *testing.T) (string, func()) {
 				caPEM, _ := generateTestCertificate(t, "test-bridge-123", nil)
-				
+
 				tmpFile, err := os.CreateTemp("", "ca-cert-*.pem")
 				require.NoError(t, err)
-				
+
 				_, err = tmpFile.Write(caPEM)
 				require.NoError(t, err)
 				tmpFile.Close()
-				
+
 				return tmpFile.Name(), func() { os.Remove(tmpFile.Name()) }
 			},
 			wantErr: false,
@@ -110,14 +110,14 @@ func TestNewBridgeTLSConfig(t *testing.T) {
 			bridgeID: "TEST-BRIDGE-UPPER",
 			setupCert: func(t *testing.T) (string, func()) {
 				caPEM, _ := generateTestCertificate(t, "test-bridge-upper", nil)
-				
+
 				tmpFile, err := os.CreateTemp("", "ca-cert-*.pem")
 				require.NoError(t, err)
-				
+
 				_, err = tmpFile.Write(caPEM)
 				require.NoError(t, err)
 				tmpFile.Close()
-				
+
 				return tmpFile.Name(), func() { os.Remove(tmpFile.Name()) }
 			},
 			wantErr: false,
@@ -137,11 +137,11 @@ func TestNewBridgeTLSConfig(t *testing.T) {
 			setupCert: func(t *testing.T) (string, func()) {
 				tmpFile, err := os.CreateTemp("", "invalid-cert-*.pem")
 				require.NoError(t, err)
-				
+
 				_, err = tmpFile.Write([]byte("invalid pem content"))
 				require.NoError(t, err)
 				tmpFile.Close()
-				
+
 				return tmpFile.Name(), func() { os.Remove(tmpFile.Name()) }
 			},
 			wantErr:  true,
@@ -169,7 +169,7 @@ func TestNewBridgeTLSConfig(t *testing.T) {
 			assert.True(t, config.InsecureSkipVerify) // Required for custom verification
 			assert.NotNil(t, config.RootCAs)
 			assert.NotNil(t, config.VerifyPeerCertificate)
-			
+
 			// Verify bridge ID is lowercased
 			expectedServerName := tt.bridgeID
 			if tt.bridgeID != "" {
@@ -182,10 +182,10 @@ func TestNewBridgeTLSConfig(t *testing.T) {
 
 func TestResolveCABundlePath(t *testing.T) {
 	tests := []struct {
-		name        string
-		setupEnv    func(t *testing.T) (string, func())
-		wantErr     bool
-		errorMsg    string
+		name         string
+		setupEnv     func(t *testing.T) (string, func())
+		wantErr      bool
+		errorMsg     string
 		expectedPath string
 	}{
 		{
@@ -194,9 +194,9 @@ func TestResolveCABundlePath(t *testing.T) {
 				tmpFile, err := os.CreateTemp("", "ca-bundle-*.pem")
 				require.NoError(t, err)
 				tmpFile.Close()
-				
+
 				cleanup := testutils.SetEnv(t, "HUE_CA_CERTS_PATH", tmpFile.Name())
-				
+
 				return tmpFile.Name(), func() {
 					cleanup()
 					os.Remove(tmpFile.Name())
@@ -250,18 +250,18 @@ func TestResolveCABundlePath(t *testing.T) {
 func TestCreateCustomCertVerifier(t *testing.T) {
 	// Generate test certificates
 	caPEM, serverCertBytes := generateTestCertificate(t, "test-bridge-123", nil)
-	
+
 	// Create cert pool with CA
 	certPool := x509.NewCertPool()
 	ok := certPool.AppendCertsFromPEM(caPEM)
 	require.True(t, ok)
 
 	tests := []struct {
-		name             string
-		expectedServer   string
-		serverCert       []byte
-		wantErr          bool
-		errorMsg         string
+		name           string
+		expectedServer string
+		serverCert     []byte
+		wantErr        bool
+		errorMsg       string
 	}{
 		{
 			name:           "verifies certificate with matching CN",
@@ -314,7 +314,7 @@ func TestCreateCustomCertVerifier_WithSAN(t *testing.T) {
 	// Generate certificate with SAN entries
 	dnsNames := []string{"test-bridge-san"}
 	caPEM, serverCertBytes := generateTestCertificate(t, "test-bridge-cn", dnsNames)
-	
+
 	// Create cert pool with CA
 	certPool := x509.NewCertPool()
 	ok := certPool.AppendCertsFromPEM(caPEM)
@@ -390,19 +390,19 @@ func TestNewBridgeTLSConfig_Integration(t *testing.T) {
 	t.Run("full integration with valid certificate", func(t *testing.T) {
 		bridgeID := "ecb5fafffe123456"
 		caPEM, _ := generateTestCertificate(t, bridgeID, nil)
-		
+
 		tmpFile, err := os.CreateTemp("", "integration-cert-*.pem")
 		require.NoError(t, err)
 		defer os.Remove(tmpFile.Name())
-		
+
 		_, err = tmpFile.Write(caPEM)
 		require.NoError(t, err)
 		tmpFile.Close()
-		
+
 		config, err := NewBridgeTLSConfig(bridgeID, tmpFile.Name())
 		require.NoError(t, err)
 		assert.NotNil(t, config)
-		
+
 		// Verify config properties
 		assert.True(t, config.InsecureSkipVerify)
 		assert.NotNil(t, config.RootCAs)
@@ -418,10 +418,10 @@ func TestResolveCABundlePath_FileSystemTests(t *testing.T) {
 		require.NoError(t, err)
 		defer os.Remove(tmpFile.Name())
 		tmpFile.Close()
-		
+
 		cleanup := testutils.SetEnv(t, "HUE_CA_CERTS_PATH", tmpFile.Name())
 		defer cleanup()
-		
+
 		path, err := ResolveCABundlePath()
 		require.NoError(t, err)
 		assert.Equal(t, tmpFile.Name(), path)

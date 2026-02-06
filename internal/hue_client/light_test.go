@@ -65,7 +65,7 @@ func createTestClient(t *testing.T, bridgeID, serverURL string, apiKeyStore APIK
 	}
 
 	logger := logrus.New().WithField("test", "light-tests")
-	
+
 	// Create client but bypass TLS for testing with HTTP servers
 	client := &Client{
 		deviceName:  "test-device",
@@ -436,8 +436,8 @@ func TestTurnOnLightById(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "returns error when turn on fails",
-			lightID: "light-fail",
+			name:       "returns error when turn on fails",
+			lightID:    "light-fail",
 			statusCode: http.StatusOK,
 			serverResponse: LightUpdateResponse{
 				Errors: []struct {
@@ -470,7 +470,7 @@ func TestTurnOnLightById(t *testing.T) {
 				var update LightBodyUpdate
 				err := json.NewDecoder(r.Body).Decode(&update)
 				require.NoError(t, err)
-				
+
 				// Verify that On field is set to true
 				require.NotNil(t, update.On)
 				assert.True(t, update.On.On)
@@ -526,8 +526,8 @@ func TestTurnOffLightById(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "returns error when turn off fails",
-			lightID: "light-fail-off",
+			name:       "returns error when turn off fails",
+			lightID:    "light-fail-off",
 			statusCode: http.StatusOK,
 			serverResponse: LightUpdateResponse{
 				Errors: []struct {
@@ -560,7 +560,7 @@ func TestTurnOffLightById(t *testing.T) {
 				var update LightBodyUpdate
 				err := json.NewDecoder(r.Body).Decode(&update)
 				require.NoError(t, err)
-				
+
 				// Verify that On field is set to false
 				require.NotNil(t, update.On)
 				assert.False(t, update.On.On)
@@ -629,7 +629,7 @@ func TestLightOperations_Integration(t *testing.T) {
 			if r.Method == http.MethodPut {
 				var update LightBodyUpdate
 				json.NewDecoder(r.Body).Decode(&update)
-				
+
 				// Extract light ID from path
 				// In real scenario, would parse the path properly
 				response := LightUpdateResponse{
