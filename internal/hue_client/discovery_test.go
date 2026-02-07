@@ -16,8 +16,13 @@ func TestNewBridgeDiscoveryService(t *testing.T) {
 		logger := logrus.New().WithField("test", "discovery")
 		service := NewBridgeDiscoveryService(logger)
 
-		assert.NotNil(t, service)
-		assert.NotNil(t, service.logger)
+		require.NotNil(t, service)
+		require.NotNil(t, service.logger)
+
+		// Verify the logger has the component field added
+		assert.Equal(t, "BridgeDiscoveryService", service.logger.Data["component"])
+		// Verify the original field is preserved
+		assert.Equal(t, "discovery", service.logger.Data["test"])
 	})
 }
 
