@@ -237,10 +237,14 @@ func TestBridgeDiscoveryService_fetchBridgeConfigByIP(t *testing.T) {
 
 func TestBridgeDiscoveryService_DiscoverFirstBridge(t *testing.T) {
 	// TODO: Refactor BridgeDiscoveryService to accept injectable mDNS discovery dependency.
-	// Current implementation tightly couples mDNS discovery logic, making it impossible to properly
-	// mock and test in isolation. The service needs to accept a mocked mDNS discovery implementation
-	// to enable proper unit testing without relying on actual network discovery.
-	t.Skip("Skipping until BridgeDiscoveryService is refactored to support mDNS discovery injection")
+	// Current implementation has multiple testing issues:
+	// 1. Tightly couples mDNS discovery logic - impossible to mock in isolation
+	// 2. Tests make environmental assumptions (any error = no bridge found)
+	// 3. Cannot distinguish between "no bridge found" vs other discovery failures
+	// 4. Mock servers created in tests are not actually used by the implementation
+	// The service needs to accept mocked mDNS and HTTP discovery implementations
+	// to enable proper unit testing with controlled behavior.
+	t.Skip("Skipping until BridgeDiscoveryService is refactored to support dependency injection")
 
 	t.Run("returns first bridge from discovery", func(t *testing.T) {
 		// Create a mock server for bridge config endpoint
