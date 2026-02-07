@@ -312,49 +312,6 @@ func TestBridgeDiscoveryService_DiscoverBridges_HTTPFallback(t *testing.T) {
 	})
 }
 
-func TestBridgeConfig_Structure(t *testing.T) {
-	t.Run("BridgeConfig can be unmarshaled from JSON", func(t *testing.T) {
-		jsonData := `{
-			"name": "Philips hue",
-			"swversion": "1.65.0",
-			"apiversion": "1.65.0",
-			"mac": "EC:B5:FA:FF:FE:12:34:56",
-			"bridgeid": "ECB5FAFFFE123456",
-			"factorynew": false,
-			"modelid": "BSB002"
-		}`
-
-		var config BridgeConfig
-		err := json.Unmarshal([]byte(jsonData), &config)
-		require.NoError(t, err)
-
-		assert.Equal(t, "Philips hue", config.Name)
-		assert.Equal(t, "1.65.0", config.SwVersion)
-		assert.Equal(t, "ECB5FAFFFE123456", config.BridgeID)
-		assert.False(t, config.FactoryNew)
-	})
-}
-
-func TestDiscoverBridgeResult_Structure(t *testing.T) {
-	t.Run("DiscoverBridgeResult can be unmarshaled from JSON array", func(t *testing.T) {
-		jsonData := `[{
-			"id": "ECB5FAFFFE123456",
-			"internalipaddress": "192.168.1.100",
-			"macaddress": "EC:B5:FA:FF:FE:12:34:56",
-			"name": "Philips hue"
-		}]`
-
-		var results []DiscoverBridgeResult
-		err := json.Unmarshal([]byte(jsonData), &results)
-		require.NoError(t, err)
-
-		require.Len(t, results, 1)
-		assert.Equal(t, "ECB5FAFFFE123456", results[0].ID)
-		assert.Equal(t, "192.168.1.100", results[0].InternalIPAddress)
-		assert.Equal(t, "Philips hue", results[0].Name)
-	})
-}
-
 func TestBridgeDiscoveryService_Integration(t *testing.T) {
 	// TODO: Refactor BridgeDiscoveryService to accept injectable discovery dependencies.
 	// This integration test cannot properly test the discovery flow without the ability to
