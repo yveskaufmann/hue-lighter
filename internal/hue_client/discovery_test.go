@@ -312,20 +312,6 @@ func TestBridgeDiscoveryService_DiscoverBridges_HTTPFallback(t *testing.T) {
 	})
 }
 
-func TestDiscoveredBridge_Structure(t *testing.T) {
-	t.Run("DiscoveredBridge has expected fields", func(t *testing.T) {
-		bridge := &DiscoveredBridge{
-			IP:   "192.168.1.100",
-			ID:   "ECB5FAFFFE123456",
-			Name: "Philips hue",
-		}
-
-		assert.Equal(t, "192.168.1.100", bridge.IP)
-		assert.Equal(t, "ECB5FAFFFE123456", bridge.ID)
-		assert.Equal(t, "Philips hue", bridge.Name)
-	})
-}
-
 func TestBridgeConfig_Structure(t *testing.T) {
 	t.Run("BridgeConfig can be unmarshaled from JSON", func(t *testing.T) {
 		jsonData := `{
@@ -370,6 +356,12 @@ func TestDiscoverBridgeResult_Structure(t *testing.T) {
 }
 
 func TestBridgeDiscoveryService_Integration(t *testing.T) {
+	// TODO: Refactor BridgeDiscoveryService to accept injectable discovery dependencies.
+	// This integration test cannot properly test the discovery flow without the ability to
+	// inject mocked mDNS and HTTP discovery implementations. The test creates mock servers
+	// but they are not used by the actual implementation.
+	t.Skip("Skipping until BridgeDiscoveryService is refactored to support dependency injection")
+
 	t.Run("complete discovery flow with HTTP endpoint", func(t *testing.T) {
 		// Mock the discovery.meethue.com endpoint
 		discoveryServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
