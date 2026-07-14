@@ -1,11 +1,17 @@
 .SHELL = /usr/bin/env bash
 
-.PHONY: all build clean test test-coverage test-race fmt lint
+APP_NAME="hue-lighter"
+APP_ID="com.github.yveskaufmann.hue-lighter"
+VERSION="1.0.0"
+
+BINARY=bin/hue-lighter
+
+.PHONY: all build clean test test-coverage test-race test-verbose fmt lint install uninstall mac_pkg mac_install mac_uninstall
 
 all: build
 
 build:
-	go build -o bin/hue-lighter ./cmd/hue-lighter
+	go build -o ${BINARY} ./cmd/hue-lighter
 
 clean:
 	rm -rf bin/
@@ -25,40 +31,17 @@ test-verbose:
 fmt:
 	go fmt ./...
 
-install: build
-
-	if [ ! -f configs/certs/cacert_bundle.pem ]; then \
-		echo "Hue Bridge Root CA bundle not found. Please ensure configs/certs/cacert_bundle.pem exists."; \
-		echo "Take the CA bundle from https://developers.meethue.com/develop/application-design-guidance/using-https/ and write to configs/certs/cacert_bundle.pem"; \
-		exit 1; \
-	fi
-
-	sudo systemctl stop hue-lighter || true
-
-	sudo cp bin/hue-lighter /usr/bin/hue-lighter
-	sudo cp build/linux/etc/systemd/system/hue-lighter.service /etc/systemd/system/hue-lighter.service
-
-	# Create necessary directories
-	sudo mkdir -p /var/lib/hue-lighter
-
-	sudo mkdir -p /etc/hue-lighter
-	sudo cp configs/config.yaml /etc/hue-lighter/config.yaml
-	sudo cp configs/certs/cacert_bundle.pem /etc/hue-lighter/cacert_bundle.pem
-
-	# Create system user and set ownerships
-	sudo useradd --system --no-create-home --shell /usr/sbin/nologin hue-lighter || true
-	sudo chown -R hue-lighter:hue-lighter /var/lib/hue-lighter
-	sudo chown -R hue-lighter:hue-lighter /etc/hue-lighter
-
-	# Set ownership of installed binary
-	sudo systemctl daemon-reload
-	sudo systemctl enable hue-lighter
-	sudo systemctl start hue-lighter
+install:
+	$(MAKE) build && bash scripts/install.sh "$$(uname -s)"
 
 uninstall:
-	sudo systemctl stop hue-lighter || true
-	sudo systemctl disable hue-lighter
-	sudo rm -f /usr/bin/hue-lighter
-	sudo rm -f /etc/systemd/system/hue-lighter.service
-	sudo rm -rf /etc/hue-lighter
-	sudo systemctl daemon-reload
+	bash scripts/uninstall.sh
+
+mac_pkg: build
+	HUE_LIGHTER_MAC_PACKAGE_ONLY=1 bash scripts/install.sh Darwin
+
+mac_install: build
+	bash scripts/install.sh Darwin
+
+mac_uninstall:
+	scripts/uninstall.sh

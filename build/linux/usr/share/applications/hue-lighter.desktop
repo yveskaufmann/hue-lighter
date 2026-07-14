@@ -1,0 +1,20 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Hue-Lighter
+GenericName=System Utility Tool
+Comment= Hue Lighter is a small automation tool for managing Philips Hue lights, specifically designed to automate the backlighting of a desktop PC.
+Icon=hue-lighter
+
+# The command to execute (using the exact absolute path where it will land)
+Exec=/usr/local/bin/hue-lighter
+
+Environment=LOG_LEVEL=info
+
+# Terminal behavior
+Terminal=false
+
+# GNOME integration preferences
+Categories=Utility;System;
+StartupNotify=true
+Keywords=Philips-Hue;tools;

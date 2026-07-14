@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://apple.com">
+<plist version="1.0">
+    <dict>
+        <!-- Basic Bundle Information -->
+        <key>CFBundleIdentifier</key>
+        <string>com.github.yveskaufmann.hue-lighter</string>
+        <key>CFBundleName</key>
+        <string>hue-lighter</string>
+        <key>CFBundleDisplayName</key>
+        <string>Hue Lighter</string>
+        <key>CFBundleVersion</key>
+        <string>1.0.0</string>
+        <key>CFBundleShortVersionString</key>
+        <string>1.0.0</string>
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
+        <key>CFBundleSignature</key>
+        <string>????</string>
+
+        <!-- Executable Binary Target (Inside Contents/MacOS/) -->
+        <key>CFBundleExecutable</key>
+        <string>hue-lighter</string>
+
+        <!-- System Requirements -->
+        <key>LSMinimumSystemVersion</key>
+        <string>11.0</string>
+
+        <!-- Visual Assets (Optional - remove if you don't have an .icns file) -->
+        <!-- <key>CFBundleIconFile</key>
+    <string>AppIcon</string> -->
+
+        <!-- Sandbox and Security (Required if App Sandbox is enabled) -->
+        <key>NSPrincipalClass</key>
+        <string>NSApplication</string>
+
+        <key>LSEnvironment</key>
+        <dict>
+            <key>CONFIG_PATH</key>
+            <string>/Library/Application Support/hue-lighter/config.yaml</string>
+            <key>HUE_CA_CERTS_PATH</key>
+            <string>/Library/Application Support/hue-lighter/cacert_bundle.pem</string>
+            <key>HUE_API_KEY_STORE_PATH</key>
+            <string>/Library/Application Support/hue-lighter/api-keys.json</string>
+        </dict>
+    </dict>
+</plist>

@@ -1,0 +1,7 @@
+Package: hue-lighter
+Version: 1.0.0
+Architecture: amd64
+Maintainer: Yves Kaufmann <yv35kaufmann@gmail.com>
+Description: Hue Lighter is a small automation tool for managing Philips Hue lights, specifically designed to automate the backlighting of a desktop PC.
+Section: utils
+Priority: optional

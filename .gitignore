@@ -1,3 +1,4 @@
 bin/
 configs/config.yaml
+configs/api-keys.json
 configs/certs/cacert_bundle.pem

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>Label</key>
+        <string>com.github.yveskaufmann.hue-lighter</string>
+
+        <key>ProgramArguments</key>
+        <array>
+            <string>/Library/Application Support/hue-lighter/hue-lighter-daemon</string>
+        </array>
+
+        <key>EnvironmentVariables</key>
+        <dict>
+            <key>CONFIG_PATH</key>
+            <string>/Library/Application Support/hue-lighter/config.yaml</string>
+            <key>HUE_CA_CERTS_PATH</key>
+            <string>/Library/Application Support/hue-lighter/cacert_bundle.pem</string>
+            <key>HUE_API_KEY_STORE_PATH</key>
+            <string>/Library/Application Support/hue-lighter/api-keys.json</string>
+        </dict>
+
+        <key>UserName</key>
+        <string>hue-lighter</string>
+
+        <key>RunAtLoad</key>
+        <true />
+
+        <key>KeepAlive</key>
+        <dict>
+            <!-- Restart on unexpected crash, not on graceful exit (exit 0) -->
+            <key>SuccessfulExit</key>
+            <false />
+        </dict>
+
+        <key>StandardOutPath</key>
+        <string>/Library/Application Support/hue-lighter/main.log</string>
+
+        <key>StandardErrorPath</key>
+        <string>/Library/Application Support/hue-lighter/error.log</string>
+    </dict>
+</plist>

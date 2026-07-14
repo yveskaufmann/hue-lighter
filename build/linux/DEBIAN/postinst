@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+
+# Update the desktop application database shortcut index
+if [ -x "$(command -v update-desktop-database)" ]; then
+    update-desktop-database -q /usr/share/applications/
+fi
+
+# Update the icon cache so GNOME finds your new icon immediately
+if [ -x "$(command -v gtk-update-icon-cache)" ]; then
+    gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor/
+fi
+
+# Reload systemd to recognize the new service file
+systemctl daemon-reload
+
+# Enable and start the service
+systemctl enable hue-lighter.service
+systemctl start hue-lighter.service
+
+exit 0

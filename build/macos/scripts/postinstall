@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# Create "hue-lighter" system group
+if ! dscl . -read /Groups/hue-lighter >/dev/null 2>&1; then
+    echo "Erstelle Gruppe hue-lighter..."
+    dscl . -create /Groups/hue-lighter
+    dscl . -create /Groups/hue-lighter PrimaryGroupID 299
+    dscl . -create /Groups/hue-lighter RealName "Hue Lighter Group"
+fi
+
+# Create hue-lighter system user
+if ! dscl . -read /Users/hue-lighter >/dev/null 2>&1; then
+    echo "Erstelle System-User hue-lighter..."
+    dscl . -create /Users/hue-lighter
+    dscl . -create /Users/hue-lighter UniqueID 299
+    dscl . -create /Users/hue-lighter PrimaryGroupID 299
+    dscl . -create /Users/hue-lighter UserShell /usr/bin/false
+    dscl . -create /Users/hue-lighter RealName "Hue Lighter Daemon User"
+    
+    # Prevent that the user appears as common user in the macosx login screen
+    dscl . -create /Users/hue-lighter IsHidden 1
+fi
+
+# Set hue-lighter permissions
+chown -R hue-lighter:hue-lighter "/Library/Application Support/hue-lighter"
+chmod 755 "/Library/Application Support/hue-lighter"
+
+# Daemon permissions
+chown root:wheel "/Library/LaunchDaemons/com.github.yveskaufmann.hue-lighter.plist"
+chmod 644 "/Library/LaunchDaemons/com.github.yveskaufmann.hue-lighter.plist"
+
+# Exclusive api-key access
+chmod 700 "/Library/Application Support/hue-lighter/api-keys.json"
+
+# Bootout previous daemon plist to cleanup before bootstrap a new daemon
+if launchctl list | grep -q "com.github.yveskaufmann.hue-lighter"; then
+    launchctl bootout system "/Library/LaunchDaemons/com.github.yveskaufmann.hue-lighter.plist" 2>/dev/null
+fi
+
+# Bootstrap new daemon  
+launchctl bootstrap system "/Library/LaunchDaemons/com.github.yveskaufmann.hue-lighter.plist"
+
+# Immediately start daemon
+launchctl kickstart -k system/com.github.yveskaufmann.hue-lighter
+
+exit 0

@@ -14,7 +14,7 @@
       "env": {
         "CONFIG_PATH": "${workspaceFolder}/configs/config.yaml",
         "HUE_CA_CERTS_PATH": "${workspaceFolder}/configs/certs/cacert_bundle.pem",
-        "HUE_API_KEY_STORE_PATH": "${env:HOME}/.hue-lighter/api-keys.json"
+        "HUE_API_KEY_STORE_PATH": "${workspaceFolder}/configs/api-keys.json"
       },
       "console": "integratedTerminal",
       "internalConsoleOptions": "openOnFirstSessionStart"
@@ -32,7 +32,7 @@
       "env": {
         "CONFIG_PATH": "${workspaceFolder}/configs/config.yaml",
         "HUE_CA_CERTS_PATH": "${workspaceFolder}/configs/certs/cacert_bundle.pem",
-        "HUE_API_KEY_STORE_PATH": "${env:HOME}/.hue-lighter/api-keys.json"
+        "HUE_API_KEY_STORE_PATH": "${workspaceFolder}/configs/api-keys.json"
       },
       "console": "integratedTerminal",
       "internalConsoleOptions": "openOnFirstSessionStart"
