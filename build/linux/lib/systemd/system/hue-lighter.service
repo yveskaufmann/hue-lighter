@@ -1,7 +1,8 @@
 [Unit]
 Description=Hue Lighter Service
 Requires=network.target
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
@@ -12,6 +13,10 @@ RemainAfterExit=yes
 User=hue-lighter
 KillMode=process
 TimeoutStopSec=90
+
+# Attempt to restart Service with three attempts
+Restart=on-failure
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
