@@ -1,29 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
-	"com.github.yveskaufmann/hue-lighter/internal/app"
+	"com.github.yveskaufmann/hue-lighter/internal/cli"
 )
 
 func main() {
-	appInstance := app.Bootstrap()
-
-	for arg := range os.Args {
-		{
-			if os.Args[arg] == "--shutdown" {
-				err := appInstance.SendShutdownEvent()
-				if err != nil {
-					appInstance.Logger().Fatalf("failed to send shutdown event: %v", err)
-				}
-				return
-			}
-		}
-	}
-
-	appInstance.Logger().Info("Starting hue-lighter application with PID=", os.Getpid())
-
-	if err := appInstance.Run(); err != nil {
-		appInstance.Logger().Fatalf("Unhandled error: %v", err)
+	if err := cli.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, "Error:", err)
+		os.Exit(1)
 	}
 }
