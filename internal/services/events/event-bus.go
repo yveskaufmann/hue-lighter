@@ -52,7 +52,7 @@ func (s *ExternalEventService) Start() error {
 
 			}
 
-			s.logger.Printf("Listening for events on Unix socket: %q", SOCKET_HUE_LIGHTER_EVENTS)
+			s.logger.Printf("Received event connection via Unix socket: %q", SOCKET_HUE_LIGHTER_EVENTS)
 
 			buf := make([]byte, 128)
 			defer conn.Close()
@@ -65,6 +65,7 @@ func (s *ExternalEventService) Start() error {
 				}
 
 				if s.stopChan != nil {
+					s.logger.Info("Sending stop signal via stop channel to main application")
 					s.stopChan <- struct{}{}
 				}
 

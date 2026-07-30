@@ -36,7 +36,8 @@ func NewCommand() *cobra.Command {
 
 // Run executes the root command's behavior based on the collected options.
 func (o *RootOptions) Run() error {
-	appInstance := app.Bootstrap()
+	appInstance := app.Bootstrap(o.Shutdown)
+
 
 	if o.Shutdown {
 		if err := appInstance.SendShutdownEvent(); err != nil {

@@ -9,8 +9,11 @@ import (
 	"com.github.yveskaufmann/hue-lighter/internal/services/light_automation"
 )
 
-func Bootstrap() *App {
+func Bootstrap(shutdown bool) *App {
 	logger := logging.NewLogger().WithField("component", "app")
+	if shutdown {
+		logger = logger.WithField("shutdown", true)
+	}
 
 	config, err := config.LoadConfigFromDefaultPath()
 	if err != nil {

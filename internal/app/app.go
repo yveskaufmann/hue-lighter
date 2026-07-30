@@ -56,7 +56,8 @@ eventLoop:
 		select {
 		case <-signalChan:
 			a.logger.Info("Received interrupt signal, shutting down...")
-			break eventLoop
+			// TODO: Consider to turn off lights on shutdown, to avoid the additional step of sending a shutdown event via the Unix socket.
+			// break eventLoop
 		case <-a.StopChn:
 			a.logger.Info("Received stop signal, shutting down...")
 			break eventLoop

@@ -23,7 +23,7 @@ case "${OS}" in
         sudo systemctl stop hue-lighter 2>/dev/null || true
 
         sudo cp "${REPO_ROOT}/bin/hue-lighter" /usr/bin/hue-lighter
-        sudo cp "${REPO_ROOT}/build/linux/systemd/system/hue-lighter.service" \
+        sudo cp "${REPO_ROOT}/build/linux/lib/systemd/system/hue-lighter.service" \
                 /etc/systemd/system/hue-lighter.service
 
         sudo mkdir -p /var/lib/hue-lighter /etc/hue-lighter

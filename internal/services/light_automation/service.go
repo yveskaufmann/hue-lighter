@@ -81,17 +81,22 @@ func (s *Service) runAutomation() {
 	// Only attempt to enable lights when both conditions are met:
 	//  - tickTime is at night between sunset and next day's sunrise
 	if isNight {
+		s.logger.Info("It's nighttime and we've reached lights on time, turning on lights")
 		s.setLightsState(true)
 
 	} else {
+		s.logger.Info("It's daytime, lights should remain off")
 		s.setLightsState(false)
 	}
 }
 
 func (s *Service) setLightsState(turnOn bool) {
+
+	s.logger.Infof("Setting lights state to %v", turnOn)
+	s.logger.Infof("Current light config: %v", s.config.Lights)
+
 	for _, lightCfg := range s.config.Lights {
 		if turnOn {
-			s.logger.Info("It's nighttime and we've reached lights on time, turning on lights")
 
 			if s.lightStates[*lightCfg.ID] {
 				s.logger.Infof("Light ID: %s is already on, skipping", *lightCfg.ID)
@@ -104,8 +109,10 @@ func (s *Service) setLightsState(turnOn bool) {
 			}
 
 			s.lightStates[*lightCfg.ID] = true
+
+			s.logger.Infof("Light ID: %s has been turned on", *lightCfg.ID)
+
 		} else {
-			s.logger.Info("It's daytime, lights should remain off")
 
 			if !s.lightStates[*lightCfg.ID] {
 				s.logger.Infof("Light ID: %s is already off, skipping", *lightCfg.ID)
@@ -117,6 +124,8 @@ func (s *Service) setLightsState(turnOn bool) {
 				s.logger.Errorf("Failed to turn off light ID: %s, error: %v", *lightCfg.ID, err)
 			}
 			s.lightStates[*lightCfg.ID] = false
+
+			s.logger.Infof("Light ID: %s has been turned off", *lightCfg.ID)
 		}
 	}
 }
@@ -135,8 +144,8 @@ func (s *Service) refreshLightStates() {
 }
 
 func (s *Service) StopAndTurnOffLights() error {
-	s.Stop()
 	s.setLightsState(false)
+	s.Stop()
 	return nil
 }
 
