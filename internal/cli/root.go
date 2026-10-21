@@ -11,6 +11,8 @@ import (
 type RootOptions struct {
 	// Shutdown, when true, instructs hue-lighter to send a shutdown event
 	Shutdown bool
+	// NoTray, when true, runs hue-lighter without the tray icon (e.g. headless or in a container)
+	NoTray bool
 }
 
 func NewCommand() *cobra.Command {
@@ -30,14 +32,15 @@ func NewCommand() *cobra.Command {
 
 	cmd.Flags().BoolVar(&o.Shutdown, "shutdown", false,
 		"Send a shutdown event to turn off configured lights and exit, instead of starting the daemon")
+	cmd.Flags().BoolVar(&o.NoTray, "no-tray", false,
+		"Run without the tray icon, e.g. on headless systems or in containers")
 
 	return cmd
 }
 
 // Run executes the root command's behavior based on the collected options.
 func (o *RootOptions) Run() error {
-	appInstance := app.Bootstrap(o.Shutdown)
-
+	appInstance := app.Bootstrap(o.Shutdown, !o.NoTray)
 
 	if o.Shutdown {
 		if err := appInstance.SendShutdownEvent(); err != nil {

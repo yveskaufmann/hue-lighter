@@ -7,9 +7,12 @@ import (
 	"com.github.yveskaufmann/hue-lighter/internal/services/device_registration"
 	"com.github.yveskaufmann/hue-lighter/internal/services/events"
 	"com.github.yveskaufmann/hue-lighter/internal/services/light_automation"
+	"com.github.yveskaufmann/hue-lighter/internal/tray"
 )
 
-func Bootstrap(shutdown bool) *App {
+// Bootstrap creates the application. withTray enables the tray icon, which is
+// never shown when only a shutdown event is sent.
+func Bootstrap(shutdown bool, withTray bool) *App {
 	logger := logging.NewLogger().WithField("component", "app")
 	if shutdown {
 		logger = logger.WithField("shutdown", true)
@@ -47,7 +50,16 @@ func Bootstrap(shutdown bool) *App {
 	}
 
 	registerService := device_registration.NewService(client, store, logger)
-	lightService := light_automation.NewService(client, config, logger)
+	var trayIcon *tray.Tray
+	var lightCommands chan light_automation.Command
+	var lightEvents chan light_automation.LightStateChangedEvent
+	if withTray && !shutdown {
+		lightCommands = make(chan light_automation.Command, 1)
+		lightEvents = make(chan light_automation.LightStateChangedEvent, 1)
+		trayIcon = tray.New(logger, lightCommands, lightEvents)
+	}
+
+	lightService := light_automation.NewService(client, config, logger, lightCommands, lightEvents)
 	eventService := events.NewExternalEventService(lightService, logger, stopChn)
 
 	return &App{
@@ -56,6 +68,7 @@ func Bootstrap(shutdown bool) *App {
 		client:          client,
 		eventService:    eventService,
 		lightService:    lightService,
+		tray:            trayIcon,
 		config:          config,
 		StopChn:         stopChn,
 	}

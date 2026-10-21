@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24">
+  <g fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Glass -->
+    <path d="M9 16.5v-1.3C6.6 13.9 5 11.6 5 9a7 7 0 0 1 14 0c0 2.6-1.6 4.9-4 6.2v1.3z"/>
+    <!-- Filament -->
+    <path d="M10 12l2 2 2-2"/>
+    <path d="M12 14v2.5"/>
+    <!-- Screw base -->
+    <path d="M9 19.5h6"/>
+    <path d="M10.5 22h3"/>
+  </g>
+</svg>

@@ -11,6 +11,7 @@ import (
 	"com.github.yveskaufmann/hue-lighter/internal/services/device_registration"
 	"com.github.yveskaufmann/hue-lighter/internal/services/events"
 	"com.github.yveskaufmann/hue-lighter/internal/services/light_automation"
+	"com.github.yveskaufmann/hue-lighter/internal/tray"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -18,6 +19,7 @@ type App struct {
 	logger          *log.Entry
 	registerService *device_registration.Service
 	lightService    *light_automation.Service
+	tray            *tray.Tray
 	eventService    *events.ExternalEventService
 	client          *hueclient.Client
 	config          *config.Config
@@ -50,6 +52,14 @@ func (a *App) Run() error {
 	}
 	a.logger.Info("Event service started successfully")
 
+	if a.tray != nil {
+		go func() {
+			if err := a.tray.Run(); err != nil {
+				a.logger.WithError(err).Error("Tray icon stopped unexpectedly")
+			}
+		}()
+	}
+
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 
@@ -77,6 +87,9 @@ eventLoop:
 func (a *App) Stop() error {
 	a.logger.Info("Stopping application")
 
+	if a.tray != nil {
+		a.tray.Stop()
+	}
 	a.lightService.Stop()
 	a.eventService.Stop()
 
