@@ -72,7 +72,7 @@ func NewFileAPIKeyStore(filePath string, logger *log.Entry) (*FileAPIKeyStore, e
 		store:             memoryStore,
 		filePath:          filePath,
 		lastLoadTimestamp: time.Time{},
-		refreshInterval:   5 * time.Second,
+		refreshInterval:   30 * time.Second,
 		logger:            logger,
 	}
 
@@ -109,8 +109,8 @@ func (s *FileAPIKeyStore) load() error {
 		return err
 	}
 
+	s.logger.WithFields(log.Fields{"storePath": s.filePath, "lastLoadTime": s.lastLoadTimestamp}).Info("Reloaded API keys from file store.")
 	s.lastLoadTimestamp = time.Now()
-	s.logger.WithFields(log.Fields{"storePath": s.filePath}).Info("Loaded API keys from file store")
 	return nil
 
 }

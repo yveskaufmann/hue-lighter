@@ -33,20 +33,22 @@ func (a *App) EventService() *events.ExternalEventService {
 }
 
 func (a *App) Run() error {
-	a.logger.Info("Starting application")
 
 	err := a.registerService.RegisterDevice(a.client.DeviceName())
 	if err != nil {
 		return fmt.Errorf("failed to register device: %w", err)
 	}
+	a.logger.Infof("Device registered successfully")
 
 	if err := a.lightService.Start(); err != nil {
 		return fmt.Errorf("failed to start light automation service: %w", err)
 	}
+	a.logger.Info("Light automation service started successfully")
 
 	if err := a.eventService.Start(); err != nil {
 		return fmt.Errorf("failed to start event service: %w", err)
 	}
+	a.logger.Info("Event service started successfully")
 
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
@@ -83,7 +85,6 @@ func (a *App) Stop() error {
 
 func (a *App) SendShutdownEvent() error {
 
-	a.logger.Info("Starting application")
 	err := a.registerService.RegisterDevice(a.client.DeviceName())
 	if err != nil {
 		return fmt.Errorf("failed to register device: %w", err)

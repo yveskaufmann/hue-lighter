@@ -46,11 +46,13 @@ func (s *Service) Start() error {
 }
 
 func (s *Service) runAutomationTickerLoop() {
-	s.logger.Info("Running automation ticker loop")
+	s.logger.Info("Started automation ticker loop")
 
 	defer s.Stop()
 
 	s.refreshLightStates()
+	// Initial automation run to avoid delay during the first tick at the service start
+	s.runAutomation()
 
 	for {
 		select {
@@ -68,38 +70,50 @@ func (s *Service) runAutomationTickerLoop() {
 func (s *Service) runAutomation() {
 	tickTime := time.Now()
 
-	s.logger.Infof("Tick at %v", tickTime)
+	s.logger.Debugf("Tick at %v", tickTime)
 
-	if time.Since(s.lastLightStateRefresh) > 5*time.Minute {
+	if time.Since(s.lastLightStateRefresh) > 15*time.Second  {
 		s.refreshLightStates()
 	}
 
 	sunriseTime, sunsetTime := sunset.CalculateSunriseSunset(s.config.Location.Latitude, s.config.Location.Longitude)
 
-	s.logger.Infof("Sunrise at %v, Sunset at %v", sunriseTime, sunsetTime)
+	s.logger.Debugf("Sunrise at %v, Sunset at %v", sunriseTime, sunsetTime)
+	lightState := s.getLightState()
 	isNight := tickTime.Before(sunriseTime) || tickTime.After(sunsetTime)
 	// Only attempt to enable lights when both conditions are met:
 	//  - tickTime is at night between sunset and next day's sunrise
-	if isNight {
-		s.logger.Info("It's nighttime and we've reached lights on time, turning on lights")
+
+	if isNight && !lightState {
+		s.logger.Infof("Nighttime detected: turning lights ON (sunset: %v)", sunsetTime)
 		s.setLightsState(true)
 
-	} else {
-		s.logger.Info("It's daytime, lights should remain off")
+	} else if !isNight && lightState {
+		s.logger.Infof("Daytime detected: turning lights OFF (sunrise: %v)", sunriseTime)
 		s.setLightsState(false)
 	}
 }
 
+// Determines if the lights were last known to be turned on
+func (s *Service) getLightState() bool {
+	for _, state := range s.lightStates {
+		if !state {
+			return false
+		}
+	}
+	return true
+}
+
 func (s *Service) setLightsState(turnOn bool) {
 
-	s.logger.Infof("Setting lights state to %v", turnOn)
-	s.logger.Infof("Current light config: %v", s.config.Lights)
+	s.logger.Debugf("Setting lights state to %v", turnOn)
+	s.logger.Debugf("Current light config: %v", s.config.Lights)
 
 	for _, lightCfg := range s.config.Lights {
 		if turnOn {
 
 			if s.lightStates[*lightCfg.ID] {
-				s.logger.Infof("Light ID: %s is already on, skipping", *lightCfg.ID)
+				s.logger.Debugf("Light ID: %s is already on, skipping", *lightCfg.ID)
 				continue
 			}
 
@@ -115,7 +129,7 @@ func (s *Service) setLightsState(turnOn bool) {
 		} else {
 
 			if !s.lightStates[*lightCfg.ID] {
-				s.logger.Infof("Light ID: %s is already off, skipping", *lightCfg.ID)
+				s.logger.Debugf("Light ID: %s is already off, skipping", *lightCfg.ID)
 				continue
 			}
 
