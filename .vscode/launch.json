@@ -17,7 +17,8 @@
         "HUE_API_KEY_STORE_PATH": "${workspaceFolder}/configs/api-keys.json"
       },
       "console": "integratedTerminal",
-      "internalConsoleOptions": "openOnFirstSessionStart"
+      "internalConsoleOptions": "openOnFirstSessionStart",
+      "preLaunchTask": "Cleanup Debug Run"
     },
     {
       "name": "Stop Hue Lighter",
