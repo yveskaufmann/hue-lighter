@@ -11,15 +11,20 @@ func NewAPIKeyStore(logger *log.Entry) (APIKeyStore, error) {
 
 	// TODO: Support to use different API key stores implementations based on configuration
 
-	apiStorePath := os.Getenv("HUE_API_KEY_STORE_PATH")
-	if apiStorePath == "" {
-		apiStorePath = "/var/lib/hue-lighter/api-keys.json"
+	apiKeyFileStorePath := os.Getenv("HUE_API_KEY_STORE_PATH")
+	if apiKeyFileStorePath == "" {
+		apiKeyFileStorePath = "/var/lib/hue-lighter/api-keys.json"
 	}
 
-	apiKeyStore, err := NewFileAPIKeyStore(apiStorePath, logger)
+	apiKeyFileStore, err := NewFileAPIKeyStore(apiKeyFileStorePath, logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create file API key store: %w", err)
 	}
 
-	return apiKeyStore, nil
+	keyringStore, err := NewKeyringAPIKeyStore(logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create keyring API key store: %w", err)
+	}
+
+	return NewMigrationAPIKeyStore(keyringStore, apiKeyFileStore, logger), nil
 }
