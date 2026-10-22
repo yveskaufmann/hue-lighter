@@ -9,8 +9,6 @@ import (
 )
 
 type RootOptions struct {
-	// Shutdown, when true, instructs hue-lighter to send a shutdown event
-	Shutdown bool
 	// NoTray, when true, runs hue-lighter without the tray icon (e.g. headless or in a container)
 	NoTray bool
 }
@@ -22,7 +20,8 @@ func NewCommand() *cobra.Command {
 		Use:   "hue-lighter",
 		Short: "Automatically control Philips Hue lights based on sunrise/sunset and system events",
 		Long: "hue-lighter automatically turns your Philips Hue lights on or off based on " +
-			"sunrise and sunset times, and turns them off when the machine shuts down.",
+			"sunrise and sunset times, and turns them off when it is stopped (SIGTERM, SIGINT or SIGHUP), " +
+			"e.g. when the machine shuts down.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -30,8 +29,6 @@ func NewCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVar(&o.Shutdown, "shutdown", false,
-		"Send a shutdown event to turn off configured lights and exit, instead of starting the daemon")
 	cmd.Flags().BoolVar(&o.NoTray, "no-tray", false,
 		"Run without the tray icon, e.g. on headless systems or in containers")
 
@@ -40,14 +37,7 @@ func NewCommand() *cobra.Command {
 
 // Run executes the root command's behavior based on the collected options.
 func (o *RootOptions) Run() error {
-	appInstance := app.Bootstrap(o.Shutdown, !o.NoTray)
-
-	if o.Shutdown {
-		if err := appInstance.SendShutdownEvent(); err != nil {
-			return fmt.Errorf("failed to send shutdown event: %w", err)
-		}
-		return nil
-	}
+	appInstance := app.Bootstrap(!o.NoTray)
 
 	appInstance.Logger().Info("Starting hue-lighter application with PID=", os.Getpid())
 

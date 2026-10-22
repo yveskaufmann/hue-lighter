@@ -9,7 +9,6 @@ import (
 	"com.github.yveskaufmann/hue-lighter/internal/config"
 	hueclient "com.github.yveskaufmann/hue-lighter/internal/hue_client"
 	"com.github.yveskaufmann/hue-lighter/internal/services/device_registration"
-	"com.github.yveskaufmann/hue-lighter/internal/services/events"
 	"com.github.yveskaufmann/hue-lighter/internal/services/light_automation"
 	"com.github.yveskaufmann/hue-lighter/internal/tray"
 	log "github.com/sirupsen/logrus"
@@ -20,20 +19,16 @@ type App struct {
 	registerService *device_registration.Service
 	lightService    *light_automation.Service
 	tray            *tray.Tray
-	eventService    *events.ExternalEventService
 	client          *hueclient.Client
 	config          *config.Config
-	StopChn         chan struct{}
 }
 
 func (a *App) Logger() *log.Entry {
 	return a.logger
 }
 
-func (a *App) EventService() *events.ExternalEventService {
-	return a.eventService
-}
-
+// Run starts the application and blocks until SIGTERM, SIGINT or SIGHUP is
+// received. The configured lights are turned off before Run returns.
 func (a *App) Run() error {
 
 	err := a.registerService.RegisterDevice(a.client.DeviceName())
@@ -42,15 +37,14 @@ func (a *App) Run() error {
 	}
 	a.logger.Infof("Device registered successfully")
 
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP)
+	defer signal.Stop(signalChan)
+
 	if err := a.lightService.Start(); err != nil {
 		return fmt.Errorf("failed to start light automation service: %w", err)
 	}
 	a.logger.Info("Light automation service started successfully")
-
-	if err := a.eventService.Start(); err != nil {
-		return fmt.Errorf("failed to start event service: %w", err)
-	}
-	a.logger.Info("Event service started successfully")
 
 	if a.tray != nil {
 		go func() {
@@ -60,50 +54,23 @@ func (a *App) Run() error {
 		}()
 	}
 
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+	sig := <-signalChan
+	a.logger.Infof("Received %v signal, shutting down...", sig)
 
-eventLoop:
-	for {
-		select {
-		case <-signalChan:
-			a.logger.Info("Received interrupt signal, shutting down...")
-			// TODO: Consider to turn off lights on shutdown, to avoid the additional step of sending a shutdown event via the Unix socket.
-			// break eventLoop
-		case <-a.StopChn:
-			a.logger.Info("Received stop signal, shutting down...")
-			break eventLoop
-		}
-	}
-
-	close(signalChan)
-	close(a.StopChn)
-
-	a.Stop()
-
-	return nil
+	return a.Stop()
 }
 
+// Stop stops all services and turns off the configured lights.
 func (a *App) Stop() error {
 	a.logger.Info("Stopping application")
 
 	if a.tray != nil {
 		a.tray.Stop()
 	}
-	a.lightService.Stop()
-	a.eventService.Stop()
 
-	return nil
-}
-
-func (a *App) SendShutdownEvent() error {
-
-	err := a.registerService.RegisterDevice(a.client.DeviceName())
-	if err != nil {
-		return fmt.Errorf("failed to register device: %w", err)
+	if err := a.lightService.StopAndTurnOffLights(); err != nil {
+		return fmt.Errorf("failed to turn off lights: %w", err)
 	}
 
-	defer a.logger.Info("Shutdown event sent, exiting application")
-
-	return a.eventService.StopAndTurnOffLights()
+	return nil
 }

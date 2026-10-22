@@ -5,18 +5,13 @@ import (
 	hueclient "com.github.yveskaufmann/hue-lighter/internal/hue_client"
 	"com.github.yveskaufmann/hue-lighter/internal/logging"
 	"com.github.yveskaufmann/hue-lighter/internal/services/device_registration"
-	"com.github.yveskaufmann/hue-lighter/internal/services/events"
 	"com.github.yveskaufmann/hue-lighter/internal/services/light_automation"
 	"com.github.yveskaufmann/hue-lighter/internal/tray"
 )
 
-// Bootstrap creates the application. withTray enables the tray icon, which is
-// never shown when only a shutdown event is sent.
-func Bootstrap(shutdown bool, withTray bool) *App {
+// Bootstrap creates the application. withTray enables the tray icon.
+func Bootstrap(withTray bool) *App {
 	logger := logging.NewLogger().WithField("component", "app")
-	if shutdown {
-		logger = logger.WithField("shutdown", true)
-	}
 
 	config, err := config.LoadConfigFromDefaultPath()
 	if err != nil {
@@ -42,8 +37,6 @@ func Bootstrap(shutdown bool, withTray bool) *App {
 	}
 	logger.Infof("Discovered Hue Bridge at IP: %s", bridge.IP)
 
-	stopChn := make(chan struct{})
-
 	client, err := hueclient.NewClient(config.Meta.Name, bridge.ID, bridge.IP, store, certPath, logger)
 	if err != nil {
 		logger.Fatalf("Failed to create Hue client: %v", err)
@@ -53,23 +46,20 @@ func Bootstrap(shutdown bool, withTray bool) *App {
 	var trayIcon *tray.Tray
 	var lightCommands chan light_automation.Command
 	var lightEvents chan light_automation.LightStateChangedEvent
-	if withTray && !shutdown {
+	if withTray {
 		lightCommands = make(chan light_automation.Command, 1)
 		lightEvents = make(chan light_automation.LightStateChangedEvent, 1)
 		trayIcon = tray.New(logger, lightCommands, lightEvents)
 	}
 
 	lightService := light_automation.NewService(client, config, logger, lightCommands, lightEvents)
-	eventService := events.NewExternalEventService(lightService, logger, stopChn)
 
 	return &App{
 		logger:          logger,
 		registerService: registerService,
 		client:          client,
-		eventService:    eventService,
 		lightService:    lightService,
 		tray:            trayIcon,
 		config:          config,
-		StopChn:         stopChn,
 	}
 }

@@ -8,8 +8,6 @@ Wants=network-online.target
 Type=simple
 Environment=CONFIG_PATH=/etc/hue-lighter/config.yaml
 ExecStart=/usr/bin/hue-lighter
-ExecStop=/usr/bin/hue-lighter --shutdown
-RemainAfterExit=yes
 User=hue-lighter
 KillMode=process
 TimeoutStopSec=90

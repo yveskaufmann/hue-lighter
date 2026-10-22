@@ -16,6 +16,7 @@ type Service struct {
 	config                *config.Config
 	ticker                *time.Ticker
 	tickerStop            chan struct{}
+	loopDone              chan struct{}
 	lightStates           map[string]bool
 	lastLightStateRefresh time.Time
 	commands              <-chan Command
@@ -37,6 +38,7 @@ func NewService(client *hueclient.Client, config *config.Config, logger *log.Ent
 		config:      config,
 		ticker:      nil,
 		tickerStop:  make(chan struct{}),
+		loopDone:    make(chan struct{}),
 		lightStates: make(map[string]bool),
 		commands:    commands,
 		events:      events,
@@ -60,7 +62,7 @@ func (s *Service) Start() error {
 func (s *Service) runAutomationTickerLoop() {
 	s.logger.Info("Started automation ticker loop")
 
-	defer s.Stop()
+	defer close(s.loopDone)
 
 	s.refreshLightStates()
 	// Initial automation run to avoid delay during the first tick at the service start
@@ -237,12 +239,18 @@ func (s *Service) refreshLightStates() {
 	s.lastLightStateRefresh = time.Now()
 }
 
+// StopAndTurnOffLights stops the automation and then turns off the configured lights.
 func (s *Service) StopAndTurnOffLights() error {
+	s.logger.Info("Turning off lights")
 	s.setLightsState(false)
+
 	s.Stop()
+
 	return nil
 }
 
+// Stop stops the automation and waits until the automation loop has exited,
+// so the light state is no longer touched concurrently afterwards.
 func (s *Service) Stop() {
 	if s.ticker == nil {
 		s.logger.Warn("Light Automation Service is not running")
@@ -251,9 +259,9 @@ func (s *Service) Stop() {
 
 	s.logger.Info("Stopping Light Automation Service")
 
-	if s.ticker != nil {
-		s.ticker.Stop()
-		s.ticker = nil
-	}
 	close(s.tickerStop)
+	<-s.loopDone
+
+	s.ticker.Stop()
+	s.ticker = nil
 }

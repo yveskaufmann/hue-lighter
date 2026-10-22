@@ -141,7 +141,7 @@ On the very first run, `hue-lighter` needs to create a user (API key) on your Ph
 
 ### Machine Shutdown
 
-The `hue-lighter.service` is configured with an `ExecStop` command that sends a shutdown signal to the application. When your machine shuts down, `systemd` will trigger this command, and the application will turn off all configured lights before exiting.
+When `hue-lighter` receives `SIGTERM`, `SIGINT` or `SIGHUP`, it turns off all configured lights before exiting. When your machine shuts down, `systemd` stops `hue-lighter.service` by sending `SIGTERM`, so the lights are turned off automatically.
 
 ## Development
 
@@ -166,8 +166,8 @@ See the architecture diagrams and sequence flows in [docs/architecture.md](docs/
 
 ## Supported Platforms
 
-- **Linux with `systemd`:** The project installs a systemd unit and uses systemd lifecycle hooks (start/stop) for graceful shutdown and service management. The default paths are configured for Linux (`/etc/hue-lighter/`, `/usr/bin/hue-lighter`).
-- **Docker:** The application can be containerized. If running in a container, mount your `configs/config.yaml` and provide the CA bundle via `HUE_CA_CERTS_PATH` or a bind mount. Be aware that systemd-specific features (ExecStop, unit files) will not behave the same inside containers.
+- **Linux with `systemd`:** The project installs a systemd unit and relies on systemd sending `SIGTERM` on stop for graceful shutdown. The default paths are configured for Linux (`/etc/hue-lighter/`, `/usr/bin/hue-lighter`).
+- **Docker:** The application can be containerized. If running in a container, mount your `configs/config.yaml` and provide the CA bundle via `HUE_CA_CERTS_PATH` or a bind mount. The lights are turned off when the container receives `SIGTERM` (e.g. `docker stop`).
 
 Example containerization files are provided under `examples/containerized/` and a `docker-compose.yml` in `examples/`. See [docs/docker.md](docs/docker.md) for build and run instructions.
 
