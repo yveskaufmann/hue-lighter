@@ -78,33 +78,23 @@ func TestNewClient(t *testing.T) {
 			logger := logrus.New().WithField("test", tt.name)
 			apiKeyStore := newMockAPIKeyStore()
 
-			// For testing NewClient, we'll use a non-existent CA bundle path
-			// to test the error handling path, since creating valid certificates
-			// is complex and not the focus of this test
-			caBundlePath := "/nonexistent/ca-bundle.pem"
+			caPEM, _ := generateTestCertificate(t, tt.bridgeID, nil)
 
-			client, err := NewClient(tt.deviceName, tt.bridgeID, tt.bridgeIP, apiKeyStore, caBundlePath, logger)
+			client, err := NewClient(tt.deviceName, tt.bridgeID, tt.bridgeIP, apiKeyStore, caPEM, logger)
 
-			// We expect this to fail due to missing CA bundle, but that's OK for testing
-			// the error handling path. In a real test environment, we'd provide valid certs.
-			require.Error(t, err)
-			assert.Contains(t, err.Error(), "failed to create TLS config")
-			assert.Nil(t, client)
+			require.NoError(t, err)
+			require.NotNil(t, client)
+			assert.Equal(t, tt.deviceName, client.DeviceName())
 		})
 	}
 }
 
-func TestNewClient_WithValidCertPath(t *testing.T) {
-	// Test that the client creation logic works when we can bypass TLS issues
-	// by testing the behavior when TLS config creation would succeed
-
-	logger := logrus.New().WithField("test", "valid-cert")
+func TestNewClient_WithInvalidCABundle(t *testing.T) {
+	logger := logrus.New().WithField("test", "invalid-ca-bundle")
 	apiKeyStore := newMockAPIKeyStore()
 
-	// Use empty cert path to test a specific error path
-	client, err := NewClient("test-device", "bridge-123", "192.168.1.100", apiKeyStore, "", logger)
+	client, err := NewClient("test-device", "bridge-123", "192.168.1.100", apiKeyStore, []byte("invalid pem content"), logger)
 
-	// This should fail due to empty cert path
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to create TLS config")
 	assert.Nil(t, client)

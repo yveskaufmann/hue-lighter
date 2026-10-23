@@ -4,15 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
+	"com.github.yveskaufmann/hue-lighter/internal/paths"
 	"gopkg.in/yaml.v3"
 )
 
+// LoadConfigFromDefaultPath loads the config from CONFIG_PATH or, if unset,
+// from the user's config directory (see paths.ConfigFile).
 func LoadConfigFromDefaultPath() (*Config, error) {
 
-	configPath := os.Getenv("CONFIG_PATH")
-	if configPath == "" {
-		configPath = "/etc/hue-lighter/config.yaml"
+	configPath, err := paths.ConfigFile()
+	if err != nil {
+		return nil, err
 	}
 
 	return LoadConfig(configPath)
@@ -25,9 +29,9 @@ func LoadConfig(path string) (*Config, error) {
 		if os.IsNotExist(err) {
 			return nil, fmt.Errorf("config file not found at %q\n\n"+
 				"Please create your config file by copying the example:\n"+
-				"  cp configs/config.example.yaml configs/config.yaml\n"+
-				"Then edit configs/config.yaml with your location and light IDs.\n"+
-				"See README.md for detailed setup instructions", path)
+				"  mkdir -p %q && cp configs/config.example.yaml %q\n"+
+				"Then edit it with your location and light IDs.\n"+
+				"See README.md for detailed setup instructions", path, filepath.Dir(path), path)
 		}
 		return nil, fmt.Errorf("failed to open config file %q: %w", path, err)
 	}

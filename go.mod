@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/brutella/dnssd v1.2.14
+	github.com/godbus/dbus/v5 v5.2.2
 	github.com/gogpu/systray v0.3.0
 	github.com/nathan-osman/go-sunrise v1.1.0
 	github.com/sirupsen/logrus v1.9.3
@@ -18,7 +19,6 @@ require (
 	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-webgpu/goffi v0.6.3 // indirect
-	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/miekg/dns v1.1.61 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

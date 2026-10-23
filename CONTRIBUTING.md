@@ -4,9 +4,9 @@ This document covers a minimal development setup, build and test instructions, a
 
 ## Prerequisites
 
-- Go 1.24 or newer installed and available on `PATH`.
+- Go 1.25 or newer installed and available on `PATH`.
 - GNU Make (for provided targets).
-- A Linux environment is recommended for full testing (systemd behavior, service install).
+- A Linux desktop is recommended for full testing (tray icon, keyring, Flatpak build via `make flatpak`).
 
 ## Getting the repository
 
@@ -44,7 +44,7 @@ go build -o bin/hue-lighter ./cmd/hue-lighter
 
 ## Run (development)
 
-Run the binary directly for testing (recommended) rather than installing as a systemd service:
+Run the binary directly for testing (recommended) rather than installing the Flatpak:
 
 ```sh
 ./bin/hue-lighter
@@ -52,7 +52,7 @@ Run the binary directly for testing (recommended) rather than installing as a sy
 go run ./cmd/hue-lighter
 ```
 
-If you need to pass an alternate CA bundle for TLS, set `HUE_CA_CERTS_PATH`:
+`make build` embeds `configs/certs/cacert_bundle.pem` into the binary. With `go run`/`go build` (no embedded bundle) or to use an alternate CA bundle for TLS, set `HUE_CA_CERTS_PATH`:
 
 ```sh
 export HUE_CA_CERTS_PATH=configs/certs/cacert_bundle.pem

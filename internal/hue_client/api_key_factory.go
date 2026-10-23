@@ -2,8 +2,8 @@ package hueclient
 
 import (
 	"fmt"
-	"os"
 
+	"com.github.yveskaufmann/hue-lighter/internal/paths"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -11,9 +11,9 @@ func NewAPIKeyStore(logger *log.Entry) (APIKeyStore, error) {
 
 	// TODO: Support to use different API key stores implementations based on configuration
 
-	apiKeyFileStorePath := os.Getenv("HUE_API_KEY_STORE_PATH")
-	if apiKeyFileStorePath == "" {
-		apiKeyFileStorePath = "/var/lib/hue-lighter/api-keys.json"
+	apiKeyFileStorePath, err := paths.APIKeyFile()
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve API key store path: %w", err)
 	}
 
 	apiKeyFileStore, err := NewFileAPIKeyStore(apiKeyFileStorePath, logger)
@@ -26,5 +26,10 @@ func NewAPIKeyStore(logger *log.Entry) (APIKeyStore, error) {
 		return nil, fmt.Errorf("failed to create keyring API key store: %w", err)
 	}
 
-	return NewMigrationAPIKeyStore(keyringStore, apiKeyFileStore, logger), nil
+	persistentStore := NewMigrationAPIKeyStore(keyringStore, apiKeyFileStore, logger)
+
+	// Keep API keys in memory once read from the persistent store, so turning off
+	// the lights on logout/shutdown does not depend on the session D-Bus (keyring)
+	// still being available. A changed API key requires a restart.
+	return NewMigrationAPIKeyStore(NewInMemoryAPIKeyStore(logger), persistentStore, logger), nil
 }

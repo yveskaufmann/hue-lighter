@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.yveskaufmann.HueLighter</id>
+  <name>Hue Lighter</name>
+  <summary>Turn your Hue lights on at sunset and off at sunrise</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="io.github.yveskaufmann">
+    <name>Yves Kaufmann</name>
+  </developer>
+  <description>
+    <p>
+      Hue Lighter automates the backlighting of your desktop PC: it turns the
+      configured Philips Hue lights on at sunset and off at sunrise, and turns
+      them off when you log out or shut down.
+    </p>
+    <p>
+      A tray icon lets you switch the lights manually regardless of the time of day.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.yveskaufmann.HueLighter.desktop</launchable>
+  <url type="homepage">https://github.com/yveskaufmann/hue-lighter</url>
+  <url type="bugtracker">https://github.com/yveskaufmann/hue-lighter/issues</url>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="1.0.0" date="2026-10-23"/>
+  </releases>
+</component>

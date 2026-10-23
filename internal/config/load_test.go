@@ -159,7 +159,21 @@ func TestLoadConfig_FileNotFound(t *testing.T) {
 	assert.Nil(t, config)
 	assert.Contains(t, err.Error(), "config file not found at \"/nonexistent/path/config.yaml\"")
 	assert.Contains(t, err.Error(), "Please create your config file by copying the example:")
-	assert.Contains(t, err.Error(), "cp configs/config.example.yaml configs/config.yaml")
+	assert.Contains(t, err.Error(), "cp configs/config.example.yaml \"/nonexistent/path/config.yaml\"")
+}
+
+func TestLoadConfigFromDefaultPath_UsesUserConfigDir(t *testing.T) {
+	configHome := t.TempDir()
+	configDir := filepath.Join(configHome, "hue-lighter")
+	require.NoError(t, os.MkdirAll(configDir, 0700))
+	require.NoError(t, os.WriteFile(filepath.Join(configDir, "config.yaml"), []byte(testutils.ValidHueConfigYAML()), 0644))
+
+	t.Setenv("CONFIG_PATH", "")
+	t.Setenv("XDG_CONFIG_HOME", configHome)
+
+	config, err := LoadConfigFromDefaultPath()
+	require.NoError(t, err)
+	assert.NotNil(t, config)
 }
 
 func TestLoadConfig_FileOpenError(t *testing.T) {

@@ -24,11 +24,11 @@ func Bootstrap(withTray bool) *App {
 	}
 
 	// Verify CA bundle is present before attempting discovery or creating clients.
-	certPath, err := hueclient.ResolveCABundlePath()
+	caPEM, caSource, err := hueclient.LoadCABundle()
 	if err != nil {
 		logger.Fatalf("CA bundle check failed: %v", err)
 	}
-	logger.Infof("Using CA bundle: %s", certPath)
+	logger.Infof("Using CA bundle: %s", caSource)
 
 	discoveryService := hueclient.NewBridgeDiscoveryService(logger)
 	bridge, err := discoveryService.DiscoverFirstBridge(logger)
@@ -37,7 +37,7 @@ func Bootstrap(withTray bool) *App {
 	}
 	logger.Infof("Discovered Hue Bridge at IP: %s", bridge.IP)
 
-	client, err := hueclient.NewClient(config.Meta.Name, bridge.ID, bridge.IP, store, certPath, logger)
+	client, err := hueclient.NewClient(config.Meta.Name, bridge.ID, bridge.IP, store, caPEM, logger)
 	if err != nil {
 		logger.Fatalf("Failed to create Hue client: %v", err)
 	}

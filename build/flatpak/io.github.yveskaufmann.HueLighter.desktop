@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Hue Lighter
+GenericName=Hue Light Automation
+Comment=Automatically turn your Philips Hue lights on at sunset and off at sunrise
+Icon=io.github.yveskaufmann.HueLighter
+Exec=hue-lighter
+Terminal=false
+Categories=Utility;
+Keywords=Philips;Hue;Lights;Sunset;
+StartupNotify=false

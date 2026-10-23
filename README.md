@@ -1,7 +1,7 @@
 
 # Hue Lighter
 
-Hue Lighter is a small automation tool for managing Philips Hue lights, specifically designed to automate the backlighting of a desktop PC. It intelligently turns lights on at sunset, off at sunrise, and ensures they are turned off gracefully when the machine shuts down.
+Hue Lighter is a small automation tool for managing Philips Hue lights, specifically designed to automate the backlighting of a desktop PC. It intelligently turns lights on at sunset, off at sunrise, and ensures they are turned off gracefully when you log out or the machine shuts down.
 
 ## Motivation
 
@@ -10,15 +10,17 @@ While Philips Hue already offers sunset and sunrise automation, I found it frust
 ## Features
 
 -   **Sunset/Sunrise Automation**: Automatically turns configured lights on at sunset and off at sunrise based on your geographic location.
--   **Graceful Shutdown**: Turns off all configured lights when the machine is shut down, ensuring you don't leave them on by accident.
--   **System Service**: Runs as a background service on Linux systems using `systemd`.
+-   **Tray Icon**: Switch the lights on or off manually regardless of the time of day. A manual switch is kept until the lights are back in the state the automation would choose.
+-   **Graceful Shutdown**: Turns off all configured lights when you log out or shut down the machine, ensuring you don't leave them on by accident.
+-   **Desktop App**: Runs in your desktop session, distributed as Flatpak on Linux and started automatically on login.
 -   **Automatic Registration**: On first run, it guides you through the simple process of registering the app with your Philips Hue Bridge by pressing the link button.
 
 ## Prerequisites
 
--   Go (version 1.24 or newer)
+-   Go (version 1.25 or newer)
 -   A Philips Hue Bridge connected to the same local network.
--   A Linux-based operating system with `systemd` and `systemctl`.
+-   Linux: `flatpak` and `flatpak-builder` with the `org.freedesktop.Sdk//25.08` and `org.freedesktop.Sdk.Extension.golang//25.08` from Flathub.
+-   A desktop with tray icon support (StatusNotifierItem; on GNOME the AppIndicator extension, which Ubuntu ships by default).
 -   `make` for easy installation.
 
 ## Setup and Installation
@@ -66,16 +68,11 @@ lights:
 
 ### CA bundle (required)
 
-`hue-lighter` requires the Philips Hue CA certificate bundle to validate TLS connections to the Hue Bridge. This file is not stored in version control — you must obtain it yourself and place it on the host where the service runs.
+`hue-lighter` requires the Philips Hue CA certificate bundle to validate TLS connections to the Hue Bridge. This file is not stored in version control — you must obtain it yourself. `make build` and `make flatpak` embed it into the binary.
 
-**Legal Note**: The CA bundle cannot be redistributed with this project as it would violate the [Philips Hue Terms of Use and Conditions](https://developers.meethue.com/terms-of-use-and-conditions/), which restrict the redistribution of Philips Hue materials without explicit permission. Each user must download the bundle directly from Philips.
+**Legal Note**: The CA bundle cannot be redistributed with this project as it would violate the [Philips Hue Terms of Use and Conditions](https://developers.meethue.com/terms-of-use-and-conditions/), which restrict the redistribution of Philips Hue materials without explicit permission. Each user must download the bundle directly from Philips. Because the bundle is embedded, do not share binaries or Flatpaks you built with it.
 
-- Default path: `/etc/hue-lighter/cacert_bundle.pem`
-- Override path: set the environment variable `HUE_CA_CERTS_PATH` to point to the bundle file.
-
-Where to get the bundle:
-
-Follow these steps to install the CA bundle:
+Follow these steps to provide the CA bundle:
 
 1. Download the CA bundle from the [Philips Hue Developer Portal](https://developers.meethue.com/develop/application-design-guidance/using-https/).
 2. Create the directory if it doesn't exist:
@@ -84,22 +81,27 @@ Follow these steps to install the CA bundle:
    ```
 3. Save the downloaded bundle to `configs/certs/cacert_bundle.pem`.
 
-If the CA bundle is missing when the service starts, the application will terminate with an explanatory error indicating the missing bundle and how to install it. See the `HUE_CA_CERTS_PATH` environment variable if you need a non-default location.
+To use a bundle file instead of the embedded one (e.g. in a container), set the environment variable `HUE_CA_CERTS_PATH` to its path. If neither is available, the application terminates with an explanatory error.
 
-### 3. Install the Service
-
-The `Makefile` provides a simple way to install the application and service.
+### 3. Build and Install the Flatpak (Linux)
 
 ```sh
-make install
+make flatpak
 ```
 
 This command will:
-1.  Build the `hue-lighter` binary.
-2.  Copy the binary to `/usr/bin/hue-lighter`.
-3.  Copy the systemd service file to `/etc/systemd/system/hue-lighter.service`.
-4.  Copy your configuration to `/etc/hue-lighter/config.yaml`.
-5.  Reload the `systemd` daemon and enable the service to start on boot.
+1.  Copy the CA bundle so it gets embedded into the binary.
+2.  Vendor the Go modules (the Flatpak build runs offline).
+3.  Build `io.github.yveskaufmann.HueLighter` with `flatpak-builder` and install it for the current user.
+
+Then copy your configuration into the app's config directory:
+
+```sh
+mkdir -p ~/.var/app/io.github.yveskaufmann.HueLighter/config/hue-lighter
+cp configs/config.yaml ~/.var/app/io.github.yveskaufmann.HueLighter/config/hue-lighter/config.yaml
+```
+
+When running `hue-lighter` outside of Flatpak (e.g. `make build && ./bin/hue-lighter`), the config is read from `~/.config/hue-lighter/config.yaml` instead. Set `CONFIG_PATH` to use a different file.
 
 ## Usage
 
@@ -107,41 +109,27 @@ This command will:
 
 On the very first run, `hue-lighter` needs to create a user (API key) on your Philips Hue Bridge.
 
-1.  **Start the service for the first time:**
+1.  **Start the app for the first time** from a terminal to see its logs:
     ```sh
-    sudo systemctl start hue-lighter
-    ```
-
-2.  **Check the logs:**
-    ```sh
-    journalctl -u hue-lighter -f
+    flatpak run io.github.yveskaufmann.HueLighter
     ```
     You will see a log message prompting you to **press the link button** on your Hue Bridge.
 
-3.  **Press the button** on your bridge. The application will automatically detect it, create a user, and store the API key for future use. The service will then start its normal operation.
+2.  **Press the button** on your bridge. The application will automatically detect it, create a user, and store the API key in your keyring for future use. It will then start its normal operation.
 
-### Managing the Service
+3.  **Allow running in the background** when asked. `hue-lighter` registers itself via the Background portal to start automatically on login (`~/.config/autostart/io.github.yveskaufmann.HueLighter.desktop`).
 
--   **Start the service:**
-    ```sh
-    sudo systemctl start hue-lighter
-    ```
--   **Stop the service:**
-    ```sh
-    sudo systemctl stop hue-lighter
-    ```
--   **Check the status:**
-    ```sh-
-    systemctl status hue-lighter
-    ```
--   **View logs:**
-    ```sh
-    journalctl -u hue-lighter -f
-    ```
+### Managing the App
 
-### Machine Shutdown
+-   **Start:** `flatpak run io.github.yveskaufmann.HueLighter` (or `make flatpak-run`), or start "Hue Lighter" from your app launcher.
+-   **Stop:** `kill -TERM $(pgrep -x hue-lighter)` — this turns the configured lights off. Note that `flatpak kill` terminates the app immediately without turning the lights off.
+-   **Disable autostart:** turn off "Hue Lighter" in your desktop's background apps / autostart settings.
+-   **Uninstall:** `flatpak uninstall io.github.yveskaufmann.HueLighter`
+-   **Headless (no tray icon):** pass `--no-tray`.
 
-When `hue-lighter` receives `SIGTERM`, `SIGINT` or `SIGHUP`, it turns off all configured lights before exiting. When your machine shuts down, `systemd` stops `hue-lighter.service` by sending `SIGTERM`, so the lights are turned off automatically.
+### Logout and Shutdown
+
+When `hue-lighter` receives `SIGTERM`, `SIGINT` or `SIGHUP`, it turns off all configured lights before exiting. When you log out or shut down, your session sends `SIGTERM` to the app, so the lights are turned off automatically.
 
 ## Development
 
@@ -166,8 +154,8 @@ See the architecture diagrams and sequence flows in [docs/architecture.md](docs/
 
 ## Supported Platforms
 
-- **Linux with `systemd`:** The project installs a systemd unit and relies on systemd sending `SIGTERM` on stop for graceful shutdown. The default paths are configured for Linux (`/etc/hue-lighter/`, `/usr/bin/hue-lighter`).
-- **Docker:** The application can be containerized. If running in a container, mount your `configs/config.yaml` and provide the CA bundle via `HUE_CA_CERTS_PATH` or a bind mount. The lights are turned off when the container receives `SIGTERM` (e.g. `docker stop`).
+- **Linux (Flatpak):** The app runs in the desktop session and is installed via `make flatpak`. Config and the fallback API key file live in `~/.var/app/io.github.yveskaufmann.HueLighter/config/hue-lighter/`, outside of Flatpak in `~/.config/hue-lighter/`.
+- **Docker:** The application can be containerized. Run it with `--no-tray`, mount your `configs/config.yaml` (`CONFIG_PATH`) and provide the CA bundle via `HUE_CA_CERTS_PATH`. The lights are turned off when the container receives `SIGTERM` (e.g. `docker stop`).
 
 Example containerization files are provided under `examples/containerized/` and a `docker-compose.yml` in `examples/`. See [docs/docker.md](docs/docker.md) for build and run instructions.
 

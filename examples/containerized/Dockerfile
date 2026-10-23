@@ -1,4 +1,4 @@
-FROM golang:1.24 AS builder
+FROM golang:1.25 AS builder
 WORKDIR /src
 
 #  Leverage Docker layer caching for dependencies before copying the full source code 
@@ -17,7 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV USER=huelighter \
     CONFIG_PATH=/etc/hue-lighter/config.yaml \
-    HUE_CA_CERTS_PATH=/etc/hue-lighter/cacert_bundle.pem
+    HUE_CA_CERTS_PATH=/etc/hue-lighter/cacert_bundle.pem \
+    HUE_API_KEY_STORE_PATH=/var/lib/hue-lighter/api-keys.json
 
 WORKDIR /etc/hue-lighter
 RUN groupadd -g 1001 -r ${USER} && \
@@ -28,4 +29,5 @@ COPY --from=builder --chown=${USER}:${USER} /out/hue-lighter /usr/local/bin/hue-
 VOLUME ["/etc/hue-lighter", "/var/lib/hue-lighter"]
 USER ${USER}
 
-ENTRYPOINT ["/usr/local/bin/hue-lighter"]
+# Containers have no desktop session, so run without the tray icon
+ENTRYPOINT ["/usr/local/bin/hue-lighter", "--no-tray"]

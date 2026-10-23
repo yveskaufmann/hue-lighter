@@ -2,3 +2,8 @@ bin
 configs 
 docs
 examples
+# Never embed the CA bundle into images (it must not be redistributed), mount it instead
+internal/hue_client/certs/cacert_bundle.pem
+vendor
+.flatpak-builder
+build/flatpak

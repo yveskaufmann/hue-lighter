@@ -6,16 +6,8 @@ OS="${1:-$(uname -s)}"
 
 case "${OS}" in
     Linux)
-        echo "Uninstalling hue-lighter (Linux/systemd)..."
-
-        sudo systemctl stop hue-lighter 2>/dev/null || true
-        sudo systemctl disable hue-lighter 2>/dev/null || true
-        sudo rm -f /usr/bin/hue-lighter
-        sudo rm -f /etc/systemd/system/hue-lighter.service
-        sudo rm -rf /etc/hue-lighter
-        sudo systemctl daemon-reload
-
-        echo "hue-lighter uninstalled."
+        flatpak uninstall io.github.yveskaufmann.HueLighter
+        exit 0
         ;;
 
     Darwin)

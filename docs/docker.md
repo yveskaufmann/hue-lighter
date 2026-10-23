@@ -37,9 +37,10 @@ docker run --rm \
   --network host \
   -v $(pwd)/configs/config.yaml:/etc/hue-lighter/config.yaml:ro \
   -v $(pwd)/configs/certs/cacert_bundle.pem:/etc/hue-lighter/cacert_bundle.pem:ro \
-  -v $(pwd)/var/lib/hue-lighter \
+  -v hue-lighter-data:/var/lib/hue-lighter \
   -e CONFIG_PATH=/etc/hue-lighter/config.yaml \
   -e HUE_CA_CERTS_PATH=/etc/hue-lighter/cacert_bundle.pem \
+  -e HUE_API_KEY_STORE_PATH=/var/lib/hue-lighter/api-keys.json \
   hue-lighter:local
 ```
 
@@ -56,8 +57,10 @@ From `examples/`:
 ## Notes and caveats
 
 - Discovery: the Hue bridge discovery uses mDNS/DNSSD. To allow discovery from a container, `--network host` is the simplest approach. On macOS/Windows, host networking behaves differently; using host networking is best on Linux hosts.
-- systemd: running the app in a container skips systemd lifecycle features (no `ExecStop` behavior). If you need graceful shutdown behavior, ensure your container orchestrator sends SIGTERM and that the process handles it (the app already listens to standard signals).
-- CA bundle: the Philips Hue CA bundle must be provided by the user and mounted into the container at the expected path (or set `HUE_CA_CERTS_PATH` to another path inside the container).
+- Shutdown: the app turns off the configured lights on `SIGTERM`, `SIGINT` or `SIGHUP`, so `docker stop` turns them off.
+- Tray icon: containers have no desktop session, so the image runs `hue-lighter --no-tray`.
+- CA bundle: the Philips Hue CA bundle must be provided by the user and mounted into the container at the expected path (or set `HUE_CA_CERTS_PATH` to another path inside the container). It is excluded via `.dockerignore`, so it is never embedded into the image.
+- API keys: without a desktop keyring, API keys are kept in the file set via `HUE_API_KEY_STORE_PATH` (mounted volume).
 - Security: do not publish images that embed your private `configs/config.yaml` or API keys.
 
 If you'd like, I can:

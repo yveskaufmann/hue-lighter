@@ -13,3 +13,4 @@ services:
     environment:
       - CONFIG_PATH=/etc/hue-lighter/config.yaml
       - HUE_CA_CERTS_PATH=/etc/hue-lighter/cacert_bundle.pem
+      - HUE_API_KEY_STORE_PATH=/var/lib/hue-lighter/api-keys.json

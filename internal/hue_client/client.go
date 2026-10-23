@@ -21,11 +21,11 @@ type Client struct {
 	logger      *log.Entry
 }
 
-func NewClient(deviceName string, bridgeID string, bridgeIP string, apiKeyStore APIKeyStore, caBundlePath string, logger *log.Entry) (*Client, error) {
+func NewClient(deviceName string, bridgeID string, bridgeIP string, apiKeyStore APIKeyStore, caPEM []byte, logger *log.Entry) (*Client, error) {
 
 	logger = logger.WithField("component", "HueClient")
 
-	tlsConfig, err := NewBridgeTLSConfig(bridgeID, caBundlePath)
+	tlsConfig, err := NewBridgeTLSConfig(bridgeID, caPEM)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create TLS config: %w", err)
 	}

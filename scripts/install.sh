@@ -18,26 +18,9 @@ OS="${1:-$(uname -s)}"
 
 case "${OS}" in
     Linux)
-        echo "Installing hue-lighter for Linux (systemd)..."
-
-        sudo systemctl stop hue-lighter 2>/dev/null || true
-
-        sudo cp "${REPO_ROOT}/bin/hue-lighter" /usr/bin/hue-lighter
-        sudo cp "${REPO_ROOT}/build/linux/lib/systemd/system/hue-lighter.service" \
-                /etc/systemd/system/hue-lighter.service
-
-        sudo mkdir -p /var/lib/hue-lighter /etc/hue-lighter
-        sudo cp "${REPO_ROOT}/configs/config.yaml"             /etc/hue-lighter/config.yaml
-        sudo cp "${REPO_ROOT}/configs/certs/cacert_bundle.pem" /etc/hue-lighter/cacert_bundle.pem
-
-        sudo useradd --system --no-create-home --shell /usr/sbin/nologin hue-lighter 2>/dev/null || true
-        sudo chown -R hue-lighter:hue-lighter /var/lib/hue-lighter /etc/hue-lighter
-
-        sudo systemctl daemon-reload
-        sudo systemctl enable hue-lighter
-        sudo systemctl start hue-lighter
-
-        echo "hue-lighter installed and started via systemd."
+        make flatpak 
+        echo "On Linux hue-lighter is distributed as Flatpak, run: make flatpak"
+        exit 0
         ;;
 
     Darwin)

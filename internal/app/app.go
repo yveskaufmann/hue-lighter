@@ -1,11 +1,13 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"com.github.yveskaufmann/hue-lighter/internal/autostart"
 	"com.github.yveskaufmann/hue-lighter/internal/config"
 	hueclient "com.github.yveskaufmann/hue-lighter/internal/hue_client"
 	"com.github.yveskaufmann/hue-lighter/internal/services/device_registration"
@@ -54,8 +56,24 @@ func (a *App) Run() error {
 		}()
 	}
 
+	// Only desktop sessions (with tray) are started on login, not headless runs.
+	autostartCtx, cancelAutostart := context.WithCancel(context.Background())
+	autostartDone := make(chan struct{})
+	if a.tray != nil {
+		go func() {
+			defer close(autostartDone)
+			autostart.Enable(autostartCtx, a.logger)
+		}()
+	} else {
+		close(autostartDone)
+	}
+
 	sig := <-signalChan
 	a.logger.Infof("Received %v signal, shutting down...", sig)
+
+	// Stop waiting for the Background portal and close its D-Bus connection.
+	cancelAutostart()
+	<-autostartDone
 
 	return a.Stop()
 }

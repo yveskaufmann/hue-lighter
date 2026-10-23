@@ -248,9 +248,11 @@ func (s *Service) refreshLightStates() {
 // StopAndTurnOffLights stops the automation and then turns off the configured lights.
 func (s *Service) StopAndTurnOffLights() error {
 	s.logger.Info("Turning off lights")
-	s.setLightsState(false)
 
 	s.Stop()
+
+	s.setLightsState(false)
+
 
 	return nil
 }

@@ -4,3 +4,12 @@ __debug*
 configs/config.yaml
 configs/api-keys.json
 configs/certs/cacert_bundle.pem
+
+# CA bundle embedded at build time (copied from configs/certs by `make build`)
+internal/hue_client/certs/cacert_bundle.pem
+
+# Flatpak build artifacts
+vendor/
+.flatpak-builder/
+build/flatpak/build-dir/
+build/flatpak/repo/
