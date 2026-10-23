@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"com.github.yveskaufmann/hue-lighter/internal/autostart"
 	"com.github.yveskaufmann/hue-lighter/internal/config"
@@ -13,6 +14,7 @@ import (
 	"com.github.yveskaufmann/hue-lighter/internal/messages"
 	"com.github.yveskaufmann/hue-lighter/internal/services/device_registration"
 	"com.github.yveskaufmann/hue-lighter/internal/services/light_automation"
+	"com.github.yveskaufmann/hue-lighter/internal/settings"
 	"com.github.yveskaufmann/hue-lighter/internal/tray"
 	log "github.com/sirupsen/logrus"
 )
@@ -22,6 +24,7 @@ type App struct {
 	registerService *device_registration.Service
 	lightService    *light_automation.Service
 	tray            *tray.Tray
+	settings        *settings.Server
 	commands        <-chan messages.Command
 	client          *hueclient.Client
 	config          *config.Config
@@ -91,17 +94,49 @@ func (a *App) handleCommandsUntilStopped(signalChan <-chan os.Signal) {
 			a.logger.Infof("Received %v signal, shutting down...", sig)
 			return
 		case cmd := <-a.commands:
-			switch cmd {
+			switch cmd := cmd.(type) {
 			case messages.StopCommand:
 				a.logger.Info("Received stop command, shutting down...")
 				return
 			case messages.ToggleLightsCommand:
 				a.lightService.ToggleLights()
+			case messages.OpenSettingsCommand:
+				a.openSettings()
+			case messages.ApplySettingsCommand:
+				cmd.Reply <- a.applySettings(cmd.Config)
 			default:
-				a.logger.Warnf("Received unknown command: %v", cmd)
+				a.logger.Warnf("Received unknown command: %T", cmd)
 			}
 		}
 	}
+}
+
+// openSettings starts the settings page server if needed and opens the page
+// in the browser.
+func (a *App) openSettings() {
+	if a.settings == nil {
+		return
+	}
+	url, err := a.settings.Start()
+	if err != nil {
+		a.logger.WithError(err).Error("Failed to start settings page")
+		return
+	}
+	if err := settings.OpenURL(url); err != nil {
+		a.logger.WithError(err).Error("Failed to open settings page in browser")
+	}
+}
+
+// applySettings saves the config changed on the settings page and applies it
+// to the running light automation.
+func (a *App) applySettings(cfg *config.Config) error {
+	if err := config.SaveToDefaultPath(cfg); err != nil {
+		return err
+	}
+	a.lightService.ApplyConfig(cfg.Clone())
+	a.config = cfg
+	a.logger.Info("Settings saved and applied")
+	return nil
 }
 
 // Stop stops all services and turns off the configured lights.
@@ -110,6 +145,14 @@ func (a *App) Stop() error {
 
 	if a.tray != nil {
 		a.tray.Stop()
+	}
+
+	if a.settings != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		if err := a.settings.Stop(ctx); err != nil {
+			a.logger.WithError(err).Warn("Failed to stop settings page server")
+		}
+		cancel()
 	}
 
 	if err := a.lightService.StopAndTurnOffLights(); err != nil {

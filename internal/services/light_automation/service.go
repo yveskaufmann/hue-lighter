@@ -147,6 +147,31 @@ func (s *Service) ToggleLights() {
 	s.publishLightState()
 }
 
+// ApplyConfig replaces the configured lights and location while the
+// automation is running. States of removed lights are dropped and the states
+// of the new lights are fetched from the bridge; a changed location takes
+// effect with the next automation tick.
+func (s *Service) ApplyConfig(cfg *config.Config) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	configured := make(map[string]bool, len(cfg.Lights))
+	for _, lightCfg := range cfg.Lights {
+		configured[*lightCfg.ID] = true
+	}
+	for id := range s.lightStates {
+		if !configured[id] {
+			delete(s.lightStates, id)
+		}
+	}
+
+	s.config = cfg
+	s.logger.Infof("Applied new config with %d lights", len(cfg.Lights))
+
+	// Also publishes the light state of the new set of lights.
+	s.refreshLightStates()
+}
+
 // publishLightState sends a LightStateChangedEvent if the light state changed
 // since the last published event. It never blocks: if the previous event was
 // not consumed yet, it is replaced by the current one.

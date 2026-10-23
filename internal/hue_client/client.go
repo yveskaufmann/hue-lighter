@@ -40,6 +40,20 @@ func NewClient(deviceName string, bridgeID string, bridgeIP string, apiKeyStore 
 	}, nil
 }
 
+// NewClientWithHTTPClient creates a client which talks to baseURL using the
+// given HTTP client instead of a TLS config for the bridge, e.g. to test
+// against an httptest server.
+func NewClientWithHTTPClient(deviceName string, bridgeID string, baseURL string, apiKeyStore APIKeyStore, httpClient *http.Client, logger *log.Entry) *Client {
+	return &Client{
+		deviceName:  deviceName,
+		baseURL:     baseURL,
+		apiKeyStore: apiKeyStore,
+		client:      httpClient,
+		bridgeID:    bridgeID,
+		logger:      logger.WithField("component", "HueClient"),
+	}
+}
+
 func (c *Client) doRequest(path string, method string, reqBody interface{}, respResource interface{}) error {
 
 	var reqBodyReader io.Reader

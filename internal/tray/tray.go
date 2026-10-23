@@ -30,9 +30,10 @@ var PowerIconPNG []byte
 
 // Menu labels describe what clicking the lights menu item does.
 const (
-	labelTurnOn  = "Turn Lights On"
-	labelTurnOff = "Turn Lights Off"
-	labelQuit    = "Quit"
+	labelTurnOn   = "Turn Lights On"
+	labelTurnOff  = "Turn Lights Off"
+	labelSettings = "Settings…"
+	labelQuit     = "Quit"
 )
 
 // Tray shows a system tray icon which allows toggling the configured lights
@@ -67,6 +68,7 @@ func (t *Tray) Run() error {
 	t.toggleItem = menu.AddWithIcon(labelTurnOn, PowerIconPNG, t.toggleLights)
 	t.toggleItem.SetDisabled(true)
 	menu.AddSeparator()
+	menu.Add(labelSettings, t.openSettings)
 	menu.Add(labelQuit, t.quit)
 
 	t.tray.SetIcon(IconPNG).
@@ -95,14 +97,21 @@ func (t *Tray) quit() {
 	// Unlike toggling, stopping must not be dropped; the app already stopping
 	// (and no longer reading commands) is signaled via stopChn.
 	select {
-	case t.commands <- messages.StopCommand:
+	case t.commands <- messages.StopCommand{}:
+	case <-t.stopChn:
+	}
+}
+
+func (t *Tray) openSettings() {
+	select {
+	case t.commands <- messages.OpenSettingsCommand{}:
 	case <-t.stopChn:
 	}
 }
 
 func (t *Tray) toggleLights() {
 	select {
-	case t.commands <- messages.ToggleLightsCommand:
+	case t.commands <- messages.ToggleLightsCommand{}:
 	default:
 		t.logger.Debug("Toggle already pending, ignoring click")
 	}

@@ -23,17 +23,11 @@ func TestConfig_validate(t *testing.T) {
 		{
 			name: "valid config with valid coordinates",
 			config: &Config{
-				Location: struct {
-					Latitude  float64 `yaml:"latitude"`
-					Longitude float64 `yaml:"longitude"`
-				}{
+				Location: Location{
 					Latitude:  52.5,
 					Longitude: 13.4,
 				},
-				Lights: []struct {
-					ID   *string `yaml:"id"`
-					Name *string `yaml:"name"`
-				}{
+				Lights: []Light{
 					{ID: stringPtr("light-1")},
 				},
 			},
@@ -42,17 +36,11 @@ func TestConfig_validate(t *testing.T) {
 		{
 			name: "valid config with edge case coordinates",
 			config: &Config{
-				Location: struct {
-					Latitude  float64 `yaml:"latitude"`
-					Longitude float64 `yaml:"longitude"`
-				}{
+				Location: Location{
 					Latitude:  90.0,
 					Longitude: 180.0,
 				},
-				Lights: []struct {
-					ID   *string `yaml:"id"`
-					Name *string `yaml:"name"`
-				}{
+				Lights: []Light{
 					{Name: stringPtr("test-light")},
 				},
 			},
@@ -61,17 +49,11 @@ func TestConfig_validate(t *testing.T) {
 		{
 			name: "valid config with negative edge case coordinates",
 			config: &Config{
-				Location: struct {
-					Latitude  float64 `yaml:"latitude"`
-					Longitude float64 `yaml:"longitude"`
-				}{
+				Location: Location{
 					Latitude:  -90.0,
 					Longitude: -180.0,
 				},
-				Lights: []struct {
-					ID   *string `yaml:"id"`
-					Name *string `yaml:"name"`
-				}{
+				Lights: []Light{
 					{ID: stringPtr("light-1"), Name: stringPtr("light-name")},
 				},
 			},
@@ -80,10 +62,7 @@ func TestConfig_validate(t *testing.T) {
 		{
 			name: "invalid latitude too high",
 			config: &Config{
-				Location: struct {
-					Latitude  float64 `yaml:"latitude"`
-					Longitude float64 `yaml:"longitude"`
-				}{
+				Location: Location{
 					Latitude:  91.0,
 					Longitude: 0.0,
 				},
@@ -94,10 +73,7 @@ func TestConfig_validate(t *testing.T) {
 		{
 			name: "invalid latitude too low",
 			config: &Config{
-				Location: struct {
-					Latitude  float64 `yaml:"latitude"`
-					Longitude float64 `yaml:"longitude"`
-				}{
+				Location: Location{
 					Latitude:  -91.0,
 					Longitude: 0.0,
 				},
@@ -108,10 +84,7 @@ func TestConfig_validate(t *testing.T) {
 		{
 			name: "invalid longitude too high",
 			config: &Config{
-				Location: struct {
-					Latitude  float64 `yaml:"latitude"`
-					Longitude float64 `yaml:"longitude"`
-				}{
+				Location: Location{
 					Latitude:  0.0,
 					Longitude: 181.0,
 				},
@@ -122,10 +95,7 @@ func TestConfig_validate(t *testing.T) {
 		{
 			name: "invalid longitude too low",
 			config: &Config{
-				Location: struct {
-					Latitude  float64 `yaml:"latitude"`
-					Longitude float64 `yaml:"longitude"`
-				}{
+				Location: Location{
 					Latitude:  0.0,
 					Longitude: -181.0,
 				},
@@ -136,17 +106,11 @@ func TestConfig_validate(t *testing.T) {
 		{
 			name: "light with neither ID nor name",
 			config: &Config{
-				Location: struct {
-					Latitude  float64 `yaml:"latitude"`
-					Longitude float64 `yaml:"longitude"`
-				}{
+				Location: Location{
 					Latitude:  52.5,
 					Longitude: 13.4,
 				},
-				Lights: []struct {
-					ID   *string `yaml:"id"`
-					Name *string `yaml:"name"`
-				}{
+				Lights: []Light{
 					{}, // Neither ID nor Name set
 				},
 			},
@@ -156,17 +120,11 @@ func TestConfig_validate(t *testing.T) {
 		{
 			name: "valid config with multiple lights",
 			config: &Config{
-				Location: struct {
-					Latitude  float64 `yaml:"latitude"`
-					Longitude float64 `yaml:"longitude"`
-				}{
+				Location: Location{
 					Latitude:  52.5,
 					Longitude: 13.4,
 				},
-				Lights: []struct {
-					ID   *string `yaml:"id"`
-					Name *string `yaml:"name"`
-				}{
+				Lights: []Light{
 					{ID: stringPtr("light-1")},
 					{Name: stringPtr("light-2")},
 					{ID: stringPtr("light-3"), Name: stringPtr("light-3-name")},
@@ -177,34 +135,22 @@ func TestConfig_validate(t *testing.T) {
 		{
 			name: "valid config with empty lights array",
 			config: &Config{
-				Location: struct {
-					Latitude  float64 `yaml:"latitude"`
-					Longitude float64 `yaml:"longitude"`
-				}{
+				Location: Location{
 					Latitude:  52.5,
 					Longitude: 13.4,
 				},
-				Lights: []struct {
-					ID   *string `yaml:"id"`
-					Name *string `yaml:"name"`
-				}{},
+				Lights: []Light{},
 			},
 			wantErr: false,
 		},
 		{
 			name: "mixed valid and invalid lights",
 			config: &Config{
-				Location: struct {
-					Latitude  float64 `yaml:"latitude"`
-					Longitude float64 `yaml:"longitude"`
-				}{
+				Location: Location{
 					Latitude:  52.5,
 					Longitude: 13.4,
 				},
-				Lights: []struct {
-					ID   *string `yaml:"id"`
-					Name *string `yaml:"name"`
-				}{
+				Lights: []Light{
 					{ID: stringPtr("light-1")},
 					{}, // Invalid light
 				},
