@@ -230,13 +230,19 @@ func (s *Service) refreshLightStates() {
 	for _, lightCfg := range s.config.Lights {
 		state, err := s.client.GetOneLightById(*lightCfg.ID)
 		if err == nil {
+
+			if current, ok := s.lightStates[*lightCfg.ID]; ok && current != state.On.On {
+				s.logger.Infof("Light state changed externally to %v for light ID: %s",  state.On.On, *lightCfg.ID)
+			}
 			s.lightStates[*lightCfg.ID] = state.On.On
 		} else {
 			s.logger.Warnf("Could not refresh state for light %s: %v", *lightCfg.ID, err)
 		}
 	}
-
+	s.publishLightState()
 	s.lastLightStateRefresh = time.Now()
+
+	s.logger.Debugf("Refreshed light states at %v", s.lastLightStateRefresh)
 }
 
 // StopAndTurnOffLights stops the automation and then turns off the configured lights.
