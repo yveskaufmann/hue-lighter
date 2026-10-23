@@ -10,6 +10,7 @@ import (
 	"com.github.yveskaufmann/hue-lighter/internal/autostart"
 	"com.github.yveskaufmann/hue-lighter/internal/config"
 	hueclient "com.github.yveskaufmann/hue-lighter/internal/hue_client"
+	"com.github.yveskaufmann/hue-lighter/internal/messages"
 	"com.github.yveskaufmann/hue-lighter/internal/services/device_registration"
 	"com.github.yveskaufmann/hue-lighter/internal/services/light_automation"
 	"com.github.yveskaufmann/hue-lighter/internal/tray"
@@ -21,6 +22,7 @@ type App struct {
 	registerService *device_registration.Service
 	lightService    *light_automation.Service
 	tray            *tray.Tray
+	commands        <-chan messages.Command
 	client          *hueclient.Client
 	config          *config.Config
 }
@@ -30,7 +32,8 @@ func (a *App) Logger() *log.Entry {
 }
 
 // Run starts the application and blocks until SIGTERM, SIGINT or SIGHUP is
-// received. The configured lights are turned off before Run returns.
+// received or a StopCommand was sent (e.g. by the tray icon). The configured lights are
+// turned off before Run returns.
 func (a *App) Run() error {
 
 	err := a.registerService.RegisterDevice(a.client.DeviceName())
@@ -68,14 +71,37 @@ func (a *App) Run() error {
 		close(autostartDone)
 	}
 
-	sig := <-signalChan
-	a.logger.Infof("Received %v signal, shutting down...", sig)
+	a.handleCommandsUntilStopped(signalChan)
 
 	// Stop waiting for the Background portal and close its D-Bus connection.
 	cancelAutostart()
 	<-autostartDone
 
 	return a.Stop()
+}
+
+// handleCommandsUntilStopped handles commands (e.g. from the tray icon) by
+// triggering the actual actions on the services, until a stop signal or a
+// StopCommand is received. Without tray icon, commands is nil and only signals
+// are received.
+func (a *App) handleCommandsUntilStopped(signalChan <-chan os.Signal) {
+	for {
+		select {
+		case sig := <-signalChan:
+			a.logger.Infof("Received %v signal, shutting down...", sig)
+			return
+		case cmd := <-a.commands:
+			switch cmd {
+			case messages.StopCommand:
+				a.logger.Info("Received stop command, shutting down...")
+				return
+			case messages.ToggleLightsCommand:
+				a.lightService.ToggleLights()
+			default:
+				a.logger.Warnf("Received unknown command: %v", cmd)
+			}
+		}
+	}
 }
 
 // Stop stops all services and turns off the configured lights.

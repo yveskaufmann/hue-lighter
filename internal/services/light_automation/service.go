@@ -1,9 +1,11 @@
 package light_automation
 
 import (
+	"sync"
 	"time"
 
 	"com.github.yveskaufmann/hue-lighter/internal/config"
+	"com.github.yveskaufmann/hue-lighter/internal/messages"
 	"com.github.yveskaufmann/hue-lighter/internal/sunset"
 
 	hueclient "com.github.yveskaufmann/hue-lighter/internal/hue_client"
@@ -19,19 +21,21 @@ type Service struct {
 	loopDone              chan struct{}
 	lightStates           map[string]bool
 	lastLightStateRefresh time.Time
-	commands              <-chan Command
-	events                chan LightStateChangedEvent
+	events                chan messages.LightStateChangedEvent
 	publishedLightState   *bool
+	// mu guards the light states and the manual override, which are used by the
+	// automation loop as well as by ToggleLights, called from the application.
+	mu sync.Mutex
 	// manualOverride is set when the user toggled the lights into a state that
 	// differs from what the automation would choose. The automation leaves the
 	// lights alone until they are back in the state it would choose.
 	manualOverride bool
 }
 
-// NewService creates the light automation service. Commands are received on
-// commands and light state changes are published on events; both may be nil
-// when no one (e.g. no tray icon) is interested in them.
-func NewService(client *hueclient.Client, config *config.Config, logger *log.Entry, commands <-chan Command, events chan LightStateChangedEvent) *Service {
+// NewService creates the light automation service. Light state changes are
+// published on events, which may be nil when no one (e.g. no tray icon) is
+// interested in them.
+func NewService(client *hueclient.Client, config *config.Config, logger *log.Entry, events chan messages.LightStateChangedEvent) *Service {
 	return &Service{
 		logger:      logger.WithField("component", "LightAutomationService"),
 		client:      client,
@@ -40,7 +44,6 @@ func NewService(client *hueclient.Client, config *config.Config, logger *log.Ent
 		tickerStop:  make(chan struct{}),
 		loopDone:    make(chan struct{}),
 		lightStates: make(map[string]bool),
-		commands:    commands,
 		events:      events,
 	}
 }
@@ -64,7 +67,9 @@ func (s *Service) runAutomationTickerLoop() {
 
 	defer close(s.loopDone)
 
+	s.mu.Lock()
 	s.refreshLightStates()
+	s.mu.Unlock()
 	// Initial automation run to avoid delay during the first tick at the service start
 	s.runAutomation()
 
@@ -72,8 +77,6 @@ func (s *Service) runAutomationTickerLoop() {
 		select {
 		case <-s.ticker.C:
 			s.runAutomation()
-		case cmd := <-s.commands:
-			s.handleCommand(cmd)
 		case <-s.tickerStop:
 			s.logger.Info("Stopping periodic tasks.")
 			return
@@ -84,6 +87,9 @@ func (s *Service) runAutomationTickerLoop() {
 }
 
 func (s *Service) runAutomation() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	tickTime := time.Now()
 
 	s.logger.Debugf("Tick at %v", tickTime)
@@ -122,19 +128,13 @@ func (s *Service) runAutomation() {
 	s.publishLightState()
 }
 
-func (s *Service) handleCommand(cmd Command) {
-	switch cmd {
-	case ToggleLightsCommand:
-		s.toggleLights()
-	default:
-		s.logger.Warnf("Received unknown command: %v", cmd)
-	}
-}
-
-// toggleLights switches the lights regardless of sunrise/sunset. Toggling into
+// ToggleLights switches the lights regardless of sunrise/sunset. Toggling into
 // the state the automation would not choose keeps the lights that way, toggling
 // back hands control back to the automation.
-func (s *Service) toggleLights() {
+func (s *Service) ToggleLights() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	sunriseTime, sunsetTime := sunset.CalculateSunriseSunset(s.config.Location.Latitude, s.config.Location.Longitude)
 	now := time.Now()
 	isNight := now.Before(sunriseTime) || now.After(sunsetTime)
@@ -161,7 +161,7 @@ func (s *Service) publishLightState() {
 	}
 	s.publishedLightState = &on
 
-	event := LightStateChangedEvent{On: on}
+	event := messages.LightStateChangedEvent{On: on}
 	select {
 	case s.events <- event:
 	default:

@@ -3,7 +3,7 @@ package tray
 import (
 	_ "embed"
 
-	"com.github.yveskaufmann/hue-lighter/internal/services/light_automation"
+	"com.github.yveskaufmann/hue-lighter/internal/messages"
 	"github.com/gogpu/systray"
 	log "github.com/sirupsen/logrus"
 )
@@ -32,21 +32,22 @@ var PowerIconPNG []byte
 const (
 	labelTurnOn  = "Turn Lights On"
 	labelTurnOff = "Turn Lights Off"
+	labelQuit    = "Quit"
 )
 
 // Tray shows a system tray icon which allows toggling the configured lights
-// regardless of the sunrise/sunset times. It sends commands to the light
-// automation service and only learns about the light state from its events.
+// regardless of the sunrise/sunset times. It sends commands to the application
+// and only learns about the light state from the light automation's events.
 type Tray struct {
 	logger     *log.Entry
-	commands   chan<- light_automation.Command
-	events     <-chan light_automation.LightStateChangedEvent
+	commands   chan<- messages.Command
+	events     <-chan messages.LightStateChangedEvent
 	tray       *systray.SystemTray
 	toggleItem *systray.MenuItem
 	stopChn    chan struct{}
 }
 
-func New(logger *log.Entry, commands chan<- light_automation.Command, events <-chan light_automation.LightStateChangedEvent) *Tray {
+func New(logger *log.Entry, commands chan<- messages.Command, events <-chan messages.LightStateChangedEvent) *Tray {
 	return &Tray{
 		logger:   logger.WithField("component", "Tray"),
 		commands: commands,
@@ -65,6 +66,8 @@ func (t *Tray) Run() error {
 	// disabled until the service reported the light state for the first time.
 	t.toggleItem = menu.AddWithIcon(labelTurnOn, PowerIconPNG, t.toggleLights)
 	t.toggleItem.SetDisabled(true)
+	menu.AddSeparator()
+	menu.Add(labelQuit, t.quit)
 
 	t.tray.SetIcon(IconPNG).
 		SetAppName("hue-lighter").
@@ -87,9 +90,19 @@ func (t *Tray) Stop() {
 	}
 }
 
+func (t *Tray) quit() {
+	t.logger.Info("Quit requested via tray icon")
+	// Unlike toggling, stopping must not be dropped; the app already stopping
+	// (and no longer reading commands) is signaled via stopChn.
+	select {
+	case t.commands <- messages.StopCommand:
+	case <-t.stopChn:
+	}
+}
+
 func (t *Tray) toggleLights() {
 	select {
-	case t.commands <- light_automation.ToggleLightsCommand:
+	case t.commands <- messages.ToggleLightsCommand:
 	default:
 		t.logger.Debug("Toggle already pending, ignoring click")
 	}

@@ -4,6 +4,7 @@ import (
 	"com.github.yveskaufmann/hue-lighter/internal/config"
 	hueclient "com.github.yveskaufmann/hue-lighter/internal/hue_client"
 	"com.github.yveskaufmann/hue-lighter/internal/logging"
+	"com.github.yveskaufmann/hue-lighter/internal/messages"
 	"com.github.yveskaufmann/hue-lighter/internal/services/device_registration"
 	"com.github.yveskaufmann/hue-lighter/internal/services/light_automation"
 	"com.github.yveskaufmann/hue-lighter/internal/tray"
@@ -44,15 +45,15 @@ func Bootstrap(withTray bool) *App {
 
 	registerService := device_registration.NewService(client, store, logger)
 	var trayIcon *tray.Tray
-	var lightCommands chan light_automation.Command
-	var lightEvents chan light_automation.LightStateChangedEvent
+	var commands chan messages.Command
+	var lightEvents chan messages.LightStateChangedEvent
 	if withTray {
-		lightCommands = make(chan light_automation.Command, 1)
-		lightEvents = make(chan light_automation.LightStateChangedEvent, 1)
-		trayIcon = tray.New(logger, lightCommands, lightEvents)
+		commands = make(chan messages.Command, 1)
+		lightEvents = make(chan messages.LightStateChangedEvent, 1)
+		trayIcon = tray.New(logger, commands, lightEvents)
 	}
 
-	lightService := light_automation.NewService(client, config, logger, lightCommands, lightEvents)
+	lightService := light_automation.NewService(client, config, logger, lightEvents)
 
 	return &App{
 		logger:          logger,
@@ -60,6 +61,7 @@ func Bootstrap(withTray bool) *App {
 		client:          client,
 		lightService:    lightService,
 		tray:            trayIcon,
+		commands:        commands,
 		config:          config,
 	}
 }
