@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"com.github.yveskaufmann/hue-lighter/internal/testutils"
@@ -164,12 +165,18 @@ func TestLoadConfig_FileNotFound(t *testing.T) {
 
 func TestLoadConfigFromDefaultPath_UsesUserConfigDir(t *testing.T) {
 	configHome := t.TempDir()
-	configDir := filepath.Join(configHome, "hue-lighter")
-	require.NoError(t, os.MkdirAll(configDir, 0700))
-	require.NoError(t, os.WriteFile(filepath.Join(configDir, "config.yaml"), []byte(testutils.ValidHueConfigYAML()), 0644))
+	var configDir string
 
 	t.Setenv("CONFIG_PATH", "")
-	t.Setenv("XDG_CONFIG_HOME", configHome)
+	if runtime.GOOS == "darwin" {
+		configDir = filepath.Join(configHome, "Library", "Application Support", "hue-lighter")
+		t.Setenv("HOME", configHome)
+	} else {
+		t.Setenv("XDG_CONFIG_HOME", filepath.Join(configHome, ".config"))
+		configDir = filepath.Join(configHome, ".config", "hue-lighter")
+	}
+	require.NoError(t, os.MkdirAll(configDir, 0700))
+	require.NoError(t, os.WriteFile(filepath.Join(configDir, "config.yaml"), []byte(testutils.ValidHueConfigYAML()), 0644))
 
 	config, err := LoadConfigFromDefaultPath()
 	require.NoError(t, err)

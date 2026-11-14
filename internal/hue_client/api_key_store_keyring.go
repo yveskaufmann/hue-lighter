@@ -11,7 +11,7 @@ const (
 	serviceName = "com.yv35.hue-lighter"
 )
 
-type keyringApiStore struct{
+type keyringApiStore struct {
 	logger *log.Entry
 }
 

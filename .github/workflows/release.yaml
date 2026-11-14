@@ -1,0 +1,250 @@
+name: Release
+
+# Manually triggered release of main (Actions → Release → Run workflow). The
+# version is derived from the conventional commits since the last release
+# (fix → patch, feat → minor, BREAKING CHANGE → major); without releasable
+# commits nothing is built or released.
+#
+#   Determine version ─┬─> Build macOS ─┬─> Release ──> Update Homebrew tap
+#                      └─> Build Linux ─┘
+on:
+  workflow_dispatch:
+
+# Never run two releases at once, and never cancel a running one.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '24'
+  # semantic-release and its plugins, see .releaserc.json. The preset stays on
+  # v9: v10 needs conventional-changelog-writer@9, semantic-release 25 ships @8.
+  SEMANTIC_RELEASE_PACKAGES: >-
+    semantic-release@25.0.9
+    @semantic-release/exec@7.1.0
+    @semantic-release/changelog@7.0.0
+    conventional-changelog-conventionalcommits@9.3.1
+
+jobs:
+  version:
+    name: Determine version
+    # Releases are only made from main (see .releaserc.json).
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # semantic-release verifies push access, even on --dry-run
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Determine next version
+        id: version
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          npx --yes $(printf -- '-p %s ' ${SEMANTIC_RELEASE_PACKAGES}) semantic-release --dry-run
+          if [ -f .release-version ]; then
+            echo "version=$(cat .release-version)" >> "${GITHUB_OUTPUT}"
+            echo "Next version: $(cat .release-version)" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "No releasable commits, nothing to release." >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+  build-macos:
+    name: Build macOS
+    needs: version
+    if: needs.version.outputs.version != ''
+    runs-on: macos-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # The Hue CA bundle is not part of the repository; it is embedded into
+      # the binary at build time from the HUE_CA_BUNDLE secret (PEM content).
+      - name: Provide Hue CA bundle
+        env:
+          HUE_CA_BUNDLE: ${{ secrets.HUE_CA_BUNDLE }}
+        run: |
+          if [ -z "${HUE_CA_BUNDLE}" ]; then
+            echo "::error::Secret HUE_CA_BUNDLE is not set"
+            exit 1
+          fi
+          mkdir -p configs/certs
+          printf '%s\n' "${HUE_CA_BUNDLE}" > configs/certs/cacert_bundle.pem
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Build app
+        run: make mac_app VERSION="${VERSION}"
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dist-macos
+          path: dist/*
+          if-no-files-found: error
+
+  build-linux:
+    name: Build Linux
+    needs: version
+    if: needs.version.outputs.version != ''
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # The Hue CA bundle is not part of the repository; it is embedded into
+      # the binary at build time from the HUE_CA_BUNDLE secret (PEM content).
+      - name: Provide Hue CA bundle
+        env:
+          HUE_CA_BUNDLE: ${{ secrets.HUE_CA_BUNDLE }}
+        run: |
+          if [ -z "${HUE_CA_BUNDLE}" ]; then
+            echo "::error::Secret HUE_CA_BUNDLE is not set"
+            exit 1
+          fi
+          mkdir -p configs/certs
+          printf '%s\n' "${HUE_CA_BUNDLE}" > configs/certs/cacert_bundle.pem
+
+      - name: Run tests
+        run: go test -race ./...
+
+      - name: Build binaries
+        run: make linux_dist VERSION="${VERSION}"
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dist-linux
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Release
+    needs: [version, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write     # create tag and GitHub release
+      id-token: write     # build provenance attestation
+      attestations: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Download binaries
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create checksums
+        working-directory: dist
+        run: |
+          sha256sum -- * > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-path: dist/*
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # CHANGELOG.md is not committed to main (protected by a ruleset), it is
+      # attached to every release instead. The previous one is the base the
+      # notes of the new release are prepended to.
+      - name: Download previous changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p changelog
+          if gh release view >/dev/null 2>&1; then
+            gh release download --pattern CHANGELOG.md --dir changelog \
+              || echo "::warning::Latest release has no CHANGELOG.md, starting a new one"
+          else
+            echo "No previous release, starting a new changelog"
+          fi
+
+      # Creates the tag, release notes, CHANGELOG.md and the GitHub release with
+      # dist/* and CHANGELOG.md attached.
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EXPECTED_VERSION: ${{ needs.version.outputs.version }}
+        run: npx --yes $(printf -- '-p %s ' ${SEMANTIC_RELEASE_PACKAGES}) semantic-release
+
+  tap:
+    name: Update Homebrew tap
+    needs: [version, release]
+    runs-on: ubuntu-latest
+    # Holds TAP_GITHUB_TOKEN; configure required reviewers in the repo settings.
+    environment: homebrew-tap
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # Takes the checksum of what was actually published.
+      - name: Get checksum of the macOS app
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "v${VERSION}" --pattern SHA256SUMS
+          SHA256="$(grep " hue-lighter_${VERSION}_macos_universal.zip\$" SHA256SUMS | cut -d ' ' -f 1)"
+          if [ -z "${SHA256}" ]; then
+            echo "::error::No checksum for the macOS app in SHA256SUMS"
+            exit 1
+          fi
+          echo "SHA256=${SHA256}" >> "${GITHUB_ENV}"
+
+      - name: Update cask
+        env:
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          git clone --depth 1 \
+            "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/yveskaufmann/homebrew-tap.git" tap
+          mkdir -p tap/Casks
+          sed -e "s/@VERSION@/${VERSION}/g" -e "s/@SHA256@/${SHA256}/g" \
+            build/homebrew/hue-lighter.rb > tap/Casks/hue-lighter.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/hue-lighter.rb
+          git commit -m "hue-lighter ${VERSION}"
+          git push origin HEAD

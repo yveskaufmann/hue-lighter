@@ -6,8 +6,8 @@ import (
 
 type MigrationAPIKeyStore struct {
 	primaryStore APIKeyStore
-	legacyStore APIKeyStore
-	logger *log.Entry
+	legacyStore  APIKeyStore
+	logger       *log.Entry
 }
 
 // Migrates from given legacy api key store to the primary store.
@@ -78,4 +78,3 @@ func (s *MigrationAPIKeyStore) Remove(bridgeID string) error {
 	s.logger.Infof("Successfully removed API key for bridge %s from both stores", bridgeID)
 	return nil
 }
-

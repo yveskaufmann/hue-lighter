@@ -16,9 +16,21 @@ import (
 func Bootstrap(withTray bool) *App {
 	logger := logging.NewLogger().WithField("component", "app")
 
-	config, err := config.LoadConfigFromDefaultPath()
+	// Desktop sessions (with tray) start with a default config that is completed
+	// on the settings page; headless runs (e.g. containers) require a config.
+	var cfg *config.Config
+	var configCreated bool
+	var err error
+	if withTray {
+		cfg, configCreated, err = config.LoadOrCreateDefault()
+	} else {
+		cfg, err = config.LoadConfigFromDefaultPath()
+	}
 	if err != nil {
 		logger.Fatalf("Failed to load config: %v", err)
+	}
+	if configCreated {
+		logger.Info("No config found, created a default config, opening the settings page")
 	}
 
 	store, err := hueclient.NewAPIKeyStore(logger)
@@ -40,7 +52,7 @@ func Bootstrap(withTray bool) *App {
 	}
 	logger.Infof("Discovered Hue Bridge at IP: %s", bridge.IP)
 
-	client, err := hueclient.NewClient(config.Meta.Name, bridge.ID, bridge.IP, store, caPEM, logger)
+	client, err := hueclient.NewClient(cfg.Meta.Name, bridge.ID, bridge.IP, store, caPEM, logger)
 	if err != nil {
 		logger.Fatalf("Failed to create Hue client: %v", err)
 	}
@@ -55,10 +67,14 @@ func Bootstrap(withTray bool) *App {
 		lightEvents = make(chan messages.LightStateChangedEvent, 1)
 		trayIcon = tray.New(logger, commands, lightEvents)
 		settingsServer = settings.NewServer(client, geo.Default, commands, logger)
-		settingsServer.SetConfig(config)
+		settingsServer.SetConfig(cfg)
+		if configCreated {
+			// Handled once the app runs (buffered channel, nothing sent before).
+			commands <- messages.OpenSettingsCommand{}
+		}
 	}
 
-	lightService := light_automation.NewService(client, config, logger, lightEvents)
+	lightService := light_automation.NewService(client, cfg, logger, lightEvents)
 
 	return &App{
 		logger:          logger,
@@ -68,6 +84,7 @@ func Bootstrap(withTray bool) *App {
 		tray:            trayIcon,
 		settings:        settingsServer,
 		commands:        commands,
-		config:          config,
+		config:          cfg,
+		stopChn:         make(chan struct{}),
 	}
 }

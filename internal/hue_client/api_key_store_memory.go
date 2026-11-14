@@ -37,4 +37,3 @@ func (s *InMemoryAPIKeyStore) Remove(bridgeID string) error {
 
 	return nil
 }
-

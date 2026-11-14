@@ -257,7 +257,7 @@ func (s *Service) refreshLightStates() {
 		if err == nil {
 
 			if current, ok := s.lightStates[*lightCfg.ID]; ok && current != state.On.On {
-				s.logger.Infof("Light state changed externally to %v for light ID: %s",  state.On.On, *lightCfg.ID)
+				s.logger.Infof("Light state changed externally to %v for light ID: %s", state.On.On, *lightCfg.ID)
 			}
 			s.lightStates[*lightCfg.ID] = state.On.On
 		} else {
@@ -277,7 +277,6 @@ func (s *Service) StopAndTurnOffLights() error {
 	s.Stop()
 
 	s.setLightsState(false)
-
 
 	return nil
 }

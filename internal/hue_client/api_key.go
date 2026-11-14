@@ -11,4 +11,3 @@ type APIKeyStore interface {
 	Set(bridgeID string, apiKey string) error
 	Remove(bridgeID string) error
 }
-

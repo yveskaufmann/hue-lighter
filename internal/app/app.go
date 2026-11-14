@@ -26,6 +26,7 @@ type App struct {
 	tray            *tray.Tray
 	settings        *settings.Server
 	commands        <-chan messages.Command
+	stopChn         chan struct{}
 	client          *hueclient.Client
 	config          *config.Config
 }
@@ -50,17 +51,9 @@ func (a *App) Run() error {
 	defer signal.Stop(signalChan)
 
 	if err := a.lightService.Start(); err != nil {
-		return fmt.Errorf("failed to start light automation service: %w", err)
+		return fmt.Errorf("failed to start light automation service")
 	}
 	a.logger.Info("Light automation service started successfully")
-
-	if a.tray != nil {
-		go func() {
-			if err := a.tray.Run(); err != nil {
-				a.logger.WithError(err).Error("Tray icon stopped unexpectedly")
-			}
-		}()
-	}
 
 	// Only desktop sessions (with tray) are started on login, not headless runs.
 	autostartCtx, cancelAutostart := context.WithCancel(context.Background())
@@ -74,13 +67,27 @@ func (a *App) Run() error {
 		close(autostartDone)
 	}
 
-	a.handleCommandsUntilStopped(signalChan)
+	go func() {
+		a.handleCommandsUntilStopped(signalChan)
+		// Stop waiting for the Background portal and close its D-Bus connection.
+		cancelAutostart()
+		<-autostartDone
+		a.Stop()
+	}()
 
-	// Stop waiting for the Background portal and close its D-Bus connection.
-	cancelAutostart()
-	<-autostartDone
+	return a.startSysTray()
+}
 
-	return a.Stop()
+func (a *App) startSysTray() error {
+	if a.tray != nil {
+		if err := a.tray.Run(); err != nil {
+			return fmt.Errorf("Tray icon stopped unexpectedly")
+		}
+	} else {
+		a.logger.Info("Running without tray icon awaiting stop signal")
+		<-a.stopChn
+	}
+	return nil
 }
 
 // handleCommandsUntilStopped handles commands (e.g. from the tray icon) by
@@ -157,6 +164,10 @@ func (a *App) Stop() error {
 
 	if err := a.lightService.StopAndTurnOffLights(); err != nil {
 		return fmt.Errorf("failed to turn off lights: %w", err)
+	}
+
+	if a.stopChn != nil {
+		close(a.stopChn)
 	}
 
 	return nil

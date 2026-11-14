@@ -1,4 +1,7 @@
 bin/
+dist/
+.release-version
+changelog/
 __debug*
 
 configs/config.yaml
