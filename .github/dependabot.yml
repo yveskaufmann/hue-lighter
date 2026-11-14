@@ -1,0 +1,54 @@
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directories:
+      - "/"
+    schedule:
+      interval: "daily"
+      timezone: "Europe/Berlin"
+      time: "16:00"
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps-dev)"
+
+    allow:
+      - dependency-type: "direct"
+    cooldown:
+      default-days: 3
+    open-pull-requests-limit: 5
+
+    versioning-strategy: "increase-if-necessary"
+
+    groups:
+      other-production:
+        dependency-type: production
+        update-types: [minor, patch]
+      other-development:
+        dependency-type: development
+        update-types: [minor, patch]
+  
+  - package-ecosystem: "docker"
+    directories:
+      - "/examples/containerized"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "build(deps)"
+      prefix-development: "build(deps-dev)"
+    
+    groups:
+      example-docker-image:
+        patterns: ["*"]
+        
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "friday"
+      timezone: "Europe/Berlin"
+      time: "16:00"
+    commit-message:
+      prefix: "ci"
+    groups:
+      github-actions:
+        patterns: ["*"]
