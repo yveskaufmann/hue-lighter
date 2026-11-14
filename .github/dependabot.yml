@@ -17,8 +17,6 @@ updates:
       default-days: 3
     open-pull-requests-limit: 5
 
-    versioning-strategy: "increase-if-necessary"
-
     groups:
       other-production:
         dependency-type: production
