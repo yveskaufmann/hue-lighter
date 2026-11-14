@@ -32,6 +32,13 @@
 	<true/>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<!-- Applied when started via Finder/Dock/Spotlight/open, macOS discards stderr
+	     of such apps. "~" is expanded by the app. -->
+	<key>LSEnvironment</key>
+	<dict>
+		<key>LOG_FILE</key>
+		<string>~/Library/Logs/hue-lighter.log</string>
+	</dict>
 	<!-- The Hue bridge is discovered and reached on the local network -->
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Hue Lighter controls the Philips Hue bridge in your local network.</string>

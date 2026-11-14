@@ -29,7 +29,7 @@ func TestLaunchAgentPlist(t *testing.T) {
 		"LimitLoadToSessionType": "Aqua",
 		"KeepAlive":              map[string]any{"SuccessfulExit": false},
 		"ProcessType":            "Interactive",
-		"StandardOutPath":        logFile,
+		"EnvironmentVariables":   map[string]any{"LOG_FILE": logFile},
 		"StandardErrorPath":      logFile,
 	}, agent)
 }

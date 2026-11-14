@@ -22,7 +22,11 @@ func isAppBundleExecutable(executable string) bool {
 //
 // The executable is started directly (not via `open`) so launchd supervises
 // the app itself: it is restarted after a crash, but not after a regular quit
-// via the tray menu (exit code 0). Logs are written to logFile.
+// via the tray menu (exit code 0).
+//
+// Being started directly, the LSEnvironment of the app bundle does not apply,
+// so LOG_FILE is set here as well. stderr is appended to logFile too, to keep
+// output not written by the logger, e.g. Go panics.
 func launchAgentPlist(executable string, logFile string) []byte {
 	var b bytes.Buffer
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>
@@ -48,10 +52,13 @@ func launchAgentPlist(executable string, logFile string) []byte {
 	</dict>
 	<key>ProcessType</key>
 	<string>Interactive</string>
-	<key>StandardOutPath</key>
-	<string>`)
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>LOG_FILE</key>
+		<string>`)
 	xmlEscape(&b, logFile)
 	b.WriteString(`</string>
+	</dict>
 	<key>StandardErrorPath</key>
 	<string>`)
 	xmlEscape(&b, logFile)
