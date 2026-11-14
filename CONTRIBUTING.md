@@ -84,6 +84,10 @@ Run `go vet` or other linters as needed.
 
 A `.vscode/launch.json` is included for debugging. Open the project in VS Code and use the Go extension to start the debug session.
 
+## Architecture
+
+See the architecture diagrams and sequence flows in [docs/architecture.md](docs/architecture.md).
+
 ## Committing and Pull Requests
 
 - Write small, focused commits with clear messages.
