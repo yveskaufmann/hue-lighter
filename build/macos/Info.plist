@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Template for Hue Lighter.app, @VERSION@ is replaced by scripts/package-macos.sh -->
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>com.github.yveskaufmann.hue-lighter</string>
+	<key>CFBundleName</key>
+	<string>Hue Lighter</string>
+	<key>CFBundleDisplayName</key>
+	<string>Hue Lighter</string>
+	<key>CFBundleExecutable</key>
+	<string>hue-lighter</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleVersion</key>
+	<string>@VERSION@</string>
+	<key>CFBundleShortVersionString</key>
+	<string>@VERSION@</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>11.0</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	<!-- Menu bar (tray) only app: no Dock icon, no app menu -->
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<!-- The Hue bridge is discovered and reached on the local network -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Hue Lighter controls the Philips Hue bridge in your local network.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_hue._tcp</string>
+	</array>
+</dict>
+</plist>

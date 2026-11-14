@@ -2,11 +2,12 @@
 
 APP_NAME="hue-lighter"
 APP_ID="com.github.yveskaufmann.hue-lighter"
-VERSION="1.0.0"
+# Latest git tag without leading "v", e.g. 1.2.0 (or 1.2.0-3-gabc123 between tags).
+VERSION ?= $(patsubst v%,%,$(shell git describe --tags --always --dirty 2>/dev/null || echo 0.0.0))
 
 BINARY=bin/hue-lighter
 
-.PHONY: all build embed-ca-bundle clean test test-coverage test-race test-verbose fmt lint install uninstall mac_pkg mac_install mac_uninstall flatpak flatpak-run
+.PHONY: all build embed-ca-bundle clean test test-coverage test-race test-verbose fmt lint install uninstall mac_app linux_dist mac_icon mac_install mac_uninstall flatpak flatpak-run
 
 all: build
 
@@ -25,7 +26,7 @@ embed-ca-bundle:
 	fi
 
 clean:
-	rm -rf bin/
+	rm -rf bin/ dist/
 
 test:
 	go test ./...
@@ -62,11 +63,21 @@ flatpak-run:
 uninstall:
 	bash scripts/uninstall.sh
 
-mac_pkg: build
-	HUE_LIGHTER_MAC_PACKAGE_ONLY=1 bash scripts/install.sh Darwin
+# Builds bin/macos/Hue Lighter.app and dist/hue-lighter_$(VERSION)_macos_universal.zip (as used by the Homebrew cask).
+mac_app: embed-ca-bundle
+	VERSION="$(VERSION)" bash scripts/package-macos.sh
 
-mac_install: build
-	bash scripts/install.sh Darwin
+# Builds dist/hue-lighter_$(VERSION)_linux_{amd64,arm64}.tar.gz.
+linux_dist: embed-ca-bundle
+	VERSION="$(VERSION)" bash scripts/package-linux.sh
+
+# Regenerates build/macos/AppIcon.icns from the tray icon SVG.
+mac_icon:
+	bash scripts/generate-macos-icon.sh
+
+# Builds and installs the app to /Applications for local testing.
+mac_install: embed-ca-bundle
+	VERSION="$(VERSION)" bash scripts/install.sh Darwin
 
 mac_uninstall:
-	scripts/uninstall.sh
+	bash scripts/uninstall.sh Darwin

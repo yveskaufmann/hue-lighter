@@ -1,8 +1,3 @@
-// Package autostart registers hue-lighter to be started on login.
-//
-// Inside Flatpak this is done via the XDG Background portal, which asks the
-// user once and then creates the autostart entry itself. Outside of Flatpak
-// it does nothing.
 package autostart
 
 import (
