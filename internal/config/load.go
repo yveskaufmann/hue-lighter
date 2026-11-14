@@ -22,6 +22,41 @@ func LoadConfigFromDefaultPath() (*Config, error) {
 	return LoadConfig(configPath)
 }
 
+// LoadOrCreateDefault loads the config like LoadConfigFromDefaultPath, but
+// writes the Default config first if there is no config file yet. created
+// reports whether the default config was written, e.g. to let the user
+// complete it on the settings page.
+func LoadOrCreateDefault() (config *Config, created bool, err error) {
+	configPath, err := paths.ConfigFile()
+	if err != nil {
+		return nil, false, err
+	}
+
+	if _, err := os.Stat(configPath); errors.Is(err, os.ErrNotExist) {
+		config := Default()
+		if err := Save(configPath, config); err != nil {
+			return nil, false, fmt.Errorf("failed to create default config: %w", err)
+		}
+		return config, true, nil
+	}
+
+	config, err = LoadConfig(configPath)
+	return config, false, err
+}
+
+// Default returns the config written on first start: no lights yet and an
+// example location, both meant to be changed on the settings page.
+func Default() *Config {
+	config := &Config{
+		Location: Location{Latitude: 52.52, Longitude: 13.405},
+		Lights:   []Light{},
+	}
+	config.Meta.Version = "1"
+	config.Meta.Name = "Hue Lighter Automation"
+	config.Meta.Description = "Configuration for Hue Lighter Automation"
+	return config
+}
+
 func LoadConfig(path string) (*Config, error) {
 
 	file, err := os.Open(path)
