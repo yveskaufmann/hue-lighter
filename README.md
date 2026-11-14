@@ -17,11 +17,20 @@ While Philips Hue already offers sunset and sunrise automation, I found it frust
 
 ### macOS (Homebrew)
 
-```sh
-brew tap yveskaufmann/tap
-brew trust yveskaufmann/tap
-brew install --cask hue-lighter
-```
+Hue Lighter is distributed as `Hue Lighter.app` through the Homebrew tap [yveskaufmann/homebrew-tap](https://github.com/yveskaufmann/homebrew-tap).
+
+1. Register the tap. Homebrew only installs casks from taps you trust, so trust it as well:
+
+   ```sh
+   brew tap yveskaufmann/tap
+   brew trust yveskaufmann/tap
+   ```
+
+2. Install the app:
+
+   ```sh
+   brew install --cask yveskaufmann/tap/hue-lighter
+   ```
 
 > [!NOTE]
 > The app isn't signed with an Apple Developer ID. The cask removes the quarantine flag, so macOS doesn't block it.
@@ -36,7 +45,17 @@ See [docs/docker.md](docs/docker.md).
 
 ### From source
 
-Requires Go 1.25+, `make` and the Philips Hue CA bundle. The Flatpak additionally needs `flatpak-builder` with `org.freedesktop.Sdk//25.08` and `org.freedesktop.Sdk.Extension.golang//25.08` from Flathub.
+#### Prerequisites
+
+- Go (version 1.25 or newer)
+- The Philips Hue CA bundle (see Step 2)
+- GNU Make
+- **Linux:**
+  - `flatpak` and `flatpak-builder` (see [Flatpak Setup](https://flathub.org/de/setup))
+  - `org.freedesktop.Sdk//25.08` from Flathub
+  - `org.freedesktop.Sdk.Extension.golang//25.08` from Flathub.
+- **macOS:**
+  - Xcode Command Line Tools (`xcode-select --install`)
 
 1. Clone the repository:
    ```sh
@@ -87,8 +106,8 @@ Pass `--no-tray` to run without tray icon, e.g. headless or in Docker.
 
 ### Logs
 
--   **macOS:** `~/Library/Logs/hue-lighter.log`
--   **Linux:** stderr, e.g. `flatpak run io.github.yveskaufmann.HueLighter` in a terminal
+- **macOS:** `~/Library/Logs/hue-lighter.log`
+- **Linux:** stderr, e.g. `flatpak run io.github.yveskaufmann.HueLighter` in a terminal
 
 ### Stopping
 
