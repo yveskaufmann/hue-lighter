@@ -67,7 +67,6 @@ func (a *App) Run() error {
 		close(autostartDone)
 	}
 
-
 	go func() {
 		a.handleCommandsUntilStopped(signalChan)
 		// Stop waiting for the Background portal and close its D-Bus connection.

@@ -69,6 +69,6 @@ func Bootstrap(withTray bool) *App {
 		settings:        settingsServer,
 		commands:        commands,
 		config:          config,
-		stopChn: make(chan struct{}),
+		stopChn:         make(chan struct{}),
 	}
 }
