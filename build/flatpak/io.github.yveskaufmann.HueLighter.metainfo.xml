@@ -48,30 +48,26 @@
 
   <content_rating type="oars-1.1" />
 
-
   <releases>
     <release version="1.0.0" date="2026-11-14">
       <description>
-        Initial release of Hue Lighter
-
-        ### Features
-        * Hue Lighter automation service
-        ([f0ce019](https://github.com/yveskaufmann/hue-lighter/commit/f0ce01951a70833d20ee77bca8bd3512aaace646))
-        * settings page for lights and location
-        ([46f7e7e](https://github.com/yveskaufmann/hue-lighter/commit/46f7e7e894378802aff1313514db50145280b65e))
-        * tray icon for manual control
-        ([9b3402d](https://github.com/yveskaufmann/hue-lighter/commit/9b3402d477d0a72a20243bc1c2c882b3dfccdbc3))
-        * Local installation via Flatpak
+        <p>Initial release of Hue Lighter.</p>
+        <heading>Features</heading>
+        <ul>
+          <li>Hue Lighter automation service (<code>f0ce019</code>)</li>
+          <li>Settings page for lights and location (<code>46f7e7e</code>)</li>
+          <li>Tray icon for manual control (<code>9b3402d</code>)</li>
+          <li>Local installation via Flatpak</li>
+        </ul>
       </description>
     </release>
     <release version="1.1.0" date="2026-11-18">
       <description>
-
-        First release with distribution via Personal Flatpak Repository
-
-        ### Features
-
-        * Distribution via Personal Flatpak Repository
+        <p>First release with distribution via Personal Flatpak Repository.</p>
+        <heading>Features</heading>
+        <ul>
+          <li>Distribution via Personal Flatpak Repository</li>
+        </ul>
       </description>
     </release>
   </releases>
