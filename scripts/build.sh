@@ -125,12 +125,11 @@ usage() {
 }
 
 ##
-# Builds the application and stores the path to the resulting binary in the specified variable.
+# Builds the application
 #
-# Usage: build <result_binary_variable>
+# Usage: build
 #
 build() {
-  local -n _result_binary="$1"
 
   CA_BUNDLE="internal/hue_client/certs/cacert_bundle.pem"
   if [ ! -f "${CA_BUNDLE}" ]; then
@@ -177,15 +176,12 @@ build() {
   mkdir -p "$(dirname "$binary_path")"
   CGO_ENABLED=0 GOOS=$TARGET_OS GOARCH=$TARGET_ARCH go build "${build_args[@]}"
 
-  _result_binary="$binary_path"
-
   return 0
 }
 
 main() {
   parse_args "$@"
-  build result_binary
-  echo "$result_binary"
+  build
 }
 
 main "$@"
