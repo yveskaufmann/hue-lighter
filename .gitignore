@@ -16,3 +16,5 @@ vendor/
 .flatpak-builder/
 build/flatpak/build-dir/
 build/flatpak/repo/
+build/flatpak/.tmp-repo/
+build/flatpak/build-dir/

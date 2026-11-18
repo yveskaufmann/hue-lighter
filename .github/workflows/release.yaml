@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: '24'
+  NODE_VERSION: "24"
   # semantic-release and its plugins, see .releaserc.json. The preset stays on
   # v9: v10 needs conventional-changelog-writer@9, semantic-release 25 ships @8.
   SEMANTIC_RELEASE_PACKAGES: >-
@@ -96,7 +96,7 @@ jobs:
         run: go test ./...
 
       - name: Build app
-        run: make mac_app VERSION="${VERSION}"
+        run: bash scripts/package-macos.sh --version "${VERSION}"
 
       - name: Upload binaries
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -138,8 +138,11 @@ jobs:
       - name: Run tests
         run: go test -race ./...
 
-      - name: Build binaries
-        run: make linux_dist VERSION="${VERSION}"
+      - name: Build Linux binaries
+        run: scripts/package-linux.sh --version "${VERSION}"
+
+      - name: Build Flatpak bundle
+        run: scripts/package-flatpak.sh --version "${VERSION}"
 
       - name: Upload binaries
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -153,8 +156,8 @@ jobs:
     needs: [version, build-macos, build-linux]
     runs-on: ubuntu-latest
     permissions:
-      contents: write     # create tag and GitHub release
-      id-token: write     # build provenance attestation
+      contents: write # create tag and GitHub release
+      id-token: write # build provenance attestation
       attestations: write
     steps:
       - name: Checkout code

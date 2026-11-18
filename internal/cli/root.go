@@ -5,12 +5,15 @@ import (
 	"os"
 
 	"com.github.yveskaufmann/hue-lighter/internal/app"
+	"com.github.yveskaufmann/hue-lighter/internal/buildinfo"
 	"github.com/spf13/cobra"
 )
 
 type RootOptions struct {
 	// NoTray, when true, runs hue-lighter without the tray icon (e.g. headless or in a container)
 	NoTray bool
+
+	showVersion bool
 }
 
 func NewCommand() *cobra.Command {
@@ -31,12 +34,18 @@ func NewCommand() *cobra.Command {
 
 	cmd.Flags().BoolVar(&o.NoTray, "no-tray", false,
 		"Run without the tray icon, e.g. on headless systems or in containers")
+	cmd.Flags().BoolVarP(&o.showVersion, "version", "v", false, "Print the version information")
 
 	return cmd
 }
 
 // Run executes the root command's behavior based on the collected options.
 func (o *RootOptions) Run() error {
+	if o.showVersion {
+		fmt.Println(buildinfo.Format())
+		return nil
+	}
+
 	appInstance := app.Bootstrap(!o.NoTray)
 
 	appInstance.Logger().Info("Starting hue-lighter application with PID=", os.Getpid())

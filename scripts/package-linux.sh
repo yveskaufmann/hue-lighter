@@ -7,30 +7,72 @@
 # VERSION defaults to the latest git tag (without leading "v").
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "${REPO_ROOT}"
+#  Version of the app to build
+VERSION="${VERSION:-}"
 
-VERSION="${VERSION:-$(git describe --tags --always --dirty 2>/dev/null || echo 0.0.0)}"
-VERSION="${VERSION#v}"
+##
+# Parses the command-line arguments for the build script
+#
+# Usage: parse_args [arguments]
+#
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h|--help) usage; exit 0 ;;
+      -v|--version)
+        VERSION="$2"; shift 2 ;;
+      *)
+        echo "Unknown argument: $1"
+        exit 1
+        ;;
+    esac
+  done
 
-CA_BUNDLE="internal/hue_client/certs/cacert_bundle.pem"
-if [ ! -f "${CA_BUNDLE}" ]; then
-    echo "ERROR: ${CA_BUNDLE} not found, run 'make embed-ca-bundle' first." >&2
-    exit 1
-fi
+  if [[ -z "$VERSION" ]]; then
+    VERSION="$(bash scripts/get_version.sh)"
+  fi
+}
 
-mkdir -p dist
-for arch in amd64 arm64; do
-    name="hue-lighter_${VERSION}_linux_${arch}"
-    work_dir="bin/linux/${name}"
-    rm -rf "${work_dir}" "dist/${name}.tar.gz"
-    mkdir -p "${work_dir}"
+##
+# Displays the usage information for the build script
+#
+# Usage: usage
+#
+usage() {
+  echo "Usage: $0 [options]"
+  echo "Build and package the Linux binaries into tarballs"
+  echo ""
+  echo "Options:"
+  echo "  -h, --help    Show this help message"
+  echo "  -v, --version <version> Specify the version to use for the build"
+  echo ""
+}
 
-    echo "Building ${name}..."
-    CGO_ENABLED=0 GOOS=linux GOARCH="${arch}" \
-        go build -trimpath -ldflags "-s -w" -o "${work_dir}/hue-lighter" ./cmd/hue-lighter
+
+##
+# Builds the Linux binaries for the specified architectures
+# and places them in the appropriate directories.
+#
+# Usage: build_linux_binaries
+#
+build_linux_binaries() {
+  mkdir -p dist
+  for arch in amd64 arm64; do
+    archive_name="hue-lighter_${VERSION}_linux_${arch}"
+
+    work_dir="$(mktemp -d)"
+    trap 'rm -rf "$work_dir"' EXIT
+
+    bash scripts/build.sh --os linux --arch "$arch" --version "$VERSION"
     cp LICENSE README.md configs/config.example.yaml "${work_dir}/"
+    cp "bin/linux/hue-lighter" "${work_dir}/"
 
-    tar -C "bin/linux" -czf "dist/${name}.tar.gz" "${name}"
-    echo "Created dist/${name}.tar.gz"
-done
+    tar -C "$work_dir" -czf "dist/${archive_name}.tar.gz" .
+
+    echo "Created dist/${archive_name}.tar.gz"
+  done
+}
+
+
+parse_args "$@"
+build_linux_binaries
