@@ -42,6 +42,58 @@ make build
 go build -o bin/hue-lighter ./cmd/hue-lighter
 ```
 
+## Build release packages
+
+The packaging scripts default to the version from the latest Git tag (or the
+current Git description when there is no tag). Pass `VERSION` to a Make target
+to choose a version explicitly.
+
+### Linux
+
+Build tarballs for both `amd64` and `arm64`:
+
+```sh
+make linux_app
+# or choose a version
+make linux_app VERSION=1.2.3
+```
+
+The archives are written to `dist/` as
+`hue-lighter_<version>_linux_<arch>.tar.gz`. To run the packaging script
+directly, use `bash scripts/package-linux.sh --version 1.2.3`.
+
+### Flatpak
+
+Build a Flatpak bundle with `make flatpak`. This requires Flatpak and
+`flatpak-builder`; the builder may need network access to install SDK/runtime
+dependencies from Flathub. The default target architecture is `x86_64`.
+
+```sh
+make flatpak
+# or build bundles for multiple Flatpak architectures
+bash scripts/package-flatpak.sh --version 1.2.3 --arch x86_64 --arch aarch64
+```
+
+Bundles are written to `dist/` as `hue-lighter-<arch>.flatpak`. The package
+script also accepts `--version <version>`; `--arch <arch>` can be repeated.
+
+### macOS
+
+Run the macOS packaging script on macOS; it uses Apple tools including `lipo`,
+`codesign`, and `ditto`. Build the universal `arm64` + `amd64` app and zip:
+
+```sh
+make mac_app
+# or choose a version
+make mac_app VERSION=1.2.3
+# alternatively
+bash scripts/package-macos.sh --version 1.2.3
+```
+
+The app is created at `bin/macos/Hue Lighter.app`, and the distributable archive
+at `dist/hue-lighter_<version>_macos_universal.zip`. The app is ad-hoc signed,
+not signed with an Apple Developer ID.
+
 ## Run (development)
 
 Run the binary directly for testing (recommended) rather than installing the Flatpak:
