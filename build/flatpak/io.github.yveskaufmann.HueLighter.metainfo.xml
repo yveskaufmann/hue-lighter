@@ -3,11 +3,19 @@
   <id>io.github.yveskaufmann.HueLighter</id>
   <name>Hue Lighter</name>
   <summary>Turn your Hue lights on at sunset and off at sunrise</summary>
+
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
+
   <developer id="io.github.yveskaufmann">
     <name>Yves Kaufmann</name>
   </developer>
+
+  <launchable type="desktop-id">io.github.yveskaufmann.HueLighter.desktop</launchable>
+  <provides>
+    <binary>hue-lighter</binary>
+  </provides>
+
   <description>
     <p>
       Hue Lighter automates the backlighting of your desktop PC: it turns the
@@ -18,12 +26,11 @@
       A tray icon lets you switch the lights manually regardless of the time of day.
     </p>
   </description>
-  <launchable type="desktop-id">io.github.yveskaufmann.HueLighter.desktop</launchable>
+
+
   <url type="homepage">https://github.com/yveskaufmann/hue-lighter</url>
   <url type="bugtracker">https://github.com/yveskaufmann/hue-lighter/issues</url>
   <url type="vcs-browser">https://github.com/yveskaufmann/hue-lighter</url>
-
-  <content_rating type="oars-1.1" />
 
   <screenshots>
     <screenshot type="default">
@@ -39,8 +46,33 @@
     </screenshot>
   </screenshots>
 
+  <content_rating type="oars-1.1" />
+
+
   <releases>
-    <release version="1.0.0" date="2026-10-23" />
-    <release version="1.1.0" date="2026-11-18" />
+    <release version="1.0.0" date="2026-11-14">
+      <description>
+        Initial release of Hue Lighter
+
+        ### Features
+        * Hue Lighter automation service
+        ([f0ce019](https://github.com/yveskaufmann/hue-lighter/commit/f0ce01951a70833d20ee77bca8bd3512aaace646))
+        * settings page for lights and location
+        ([46f7e7e](https://github.com/yveskaufmann/hue-lighter/commit/46f7e7e894378802aff1313514db50145280b65e))
+        * tray icon for manual control
+        ([9b3402d](https://github.com/yveskaufmann/hue-lighter/commit/9b3402d477d0a72a20243bc1c2c882b3dfccdbc3))
+        * Local installation via Flatpak
+      </description>
+    </release>
+    <release version="1.1.0" date="2026-11-18">
+      <description>
+
+        First release with distribution via Personal Flatpak Repository
+
+        ### Features
+
+        * Distribution via Personal Flatpak Repository
+      </description>
+    </release>
   </releases>
-</component>
+</component>  
