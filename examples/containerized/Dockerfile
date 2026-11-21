@@ -1,4 +1,4 @@
-FROM golang:1.25 AS builder
+FROM golang:1.27 AS builder
 WORKDIR /src
 
 #  Leverage Docker layer caching for dependencies before copying the full source code 
