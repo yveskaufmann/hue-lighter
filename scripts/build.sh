@@ -18,6 +18,9 @@ APP_NAME="hue-lighter"
 # Application version
 VERSION="${VERSION:-}"
 
+# Commit hash to be embedded into the binary
+COMMIT_HASH="${COMMIT_HASH:-$(git rev-parse --short HEAD 2>/dev/null || echo none)}"
+
 # Where to place the build output
 OUTPUT_DIR="bin"
 
@@ -53,6 +56,10 @@ parse_args() {
       -a|--include-arch)
         INCLUDE_ARCH=1
         shift
+        ;;
+      -c|--commit)
+        COMMIT_HASH="$2"
+        shift 2
         ;;
       --arch)
         TARGET_ARCH="$2"
@@ -107,6 +114,7 @@ usage() {
   echo "  -h, --help    Show this help message"
   echo "  -V, --apply-version-suffix When set, appends the version suffix to the output binary"
   echo "  -a, --include-arch When set, appends the architecture to the output binary"
+  echo "  -c, --commit <commit> Specify the commit hash to embed into the binary"
   echo "  -v, --version <version> Specify the version to use for the build"
   echo "      --os <os> Specify the target operating system (e.g., linux, darwin, windows)"
   echo "      --arch <arch> Specify the target architecture (e.g., amd64/x86_64, arm64/aarch64)"
@@ -159,7 +167,7 @@ build() {
   local binary_path="$OUTPUT_DIR/$binary_sub_dir/$binary_name"
   local ldflags="-s -w"
   ldflags+=" -X ${BUILD_INFO_PKG}.version=${VERSION}"
-  ldflags+=" -X ${BUILD_INFO_PKG}.commit=$(git rev-parse --short HEAD 2>/dev/null || echo none)"
+  ldflags+=" -X ${BUILD_INFO_PKG}.commit=${COMMIT_HASH}"
   ldflags+=" -X ${BUILD_INFO_PKG}.buildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
   local build_args=()

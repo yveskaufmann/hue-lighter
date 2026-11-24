@@ -17,6 +17,9 @@ FLATPAK_MANIFEST="build/flatpak/${FLATPAK_ID}.yml"
 #  Version of the app to build
 VERSION="${VERSION:-}"
 
+# Commit hash to be embedded into the binary
+COMMIT_HASH="${COMMIT_HASH:-$(git rev-parse --short HEAD 2>/dev/null || echo none)}"
+
 #  Build directory for flatpak
 BUILD_DIR="build/flatpak/build-dir"
 
@@ -40,6 +43,8 @@ parse_args() {
       -h|--help) usage; exit 0 ;;
       -v|--version)
         VERSION="$2"; shift 2 ;;
+      -c|--commit)
+        COMMIT_HASH="$2"; shift 2 ;;
       -a|--arch)
         if [[ "$ARCHES_SPECIFIED" == false ]]; then
           ARCHES_TO_BUILD=()
@@ -70,6 +75,7 @@ usage() {
   echo "Options:"
   echo "  -h, --help    Show this help message"
   echo "  -v, --version <version> Specify the version to use for the build"
+  echo "  -c, --commit <commit> Specify the commit hash to embed into the binary"
   echo "  -a, --arch <arch> Specify the architecture to build for can be specified multiple times (default: x86_64)"
   echo ""
 }
@@ -88,7 +94,8 @@ build_flatpak_bundle() {
     build_args+=("--repo" "$REPO")
     build_args+=("$BUILD_DIR/$ARCH")
     build_args+=("${FLATPAK_MANIFEST}")
-    flatpak-builder "${build_args[@]}"
+
+    APP_VERSION="$VERSION" APP_COMMIT="$COMMIT_HASH" flatpak-builder "${build_args[@]}"
 
     local bundle_args=()
     bundle_args+=("--arch=$ARCH")

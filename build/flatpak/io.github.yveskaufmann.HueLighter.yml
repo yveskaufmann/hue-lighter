@@ -19,6 +19,9 @@ finish-args:
 
 build-options:
   append-path: /usr/lib/sdk/golang/bin
+  secret-env:
+    - APP_VERSION
+    - APP_COMMIT
   env:
     GOTOOLCHAIN: local
     CGO_ENABLED: "0"
@@ -28,7 +31,13 @@ modules:
     buildsystem: simple
     build-commands:
       - |
-        bash ./scripts/build.sh --use-go-mod-vendor --os linux --arch $FLATPAK_ARCH
+        echo "📦 Building hue-lighter for flatpak with version $APP_VERSION and commit $APP_COMMIT"
+        bash ./scripts/build.sh  \
+          --version "${APP_VERSION}" \
+          --commit "${APP_COMMIT}" \
+          --use-go-mod-vendor \
+          --os linux \
+          --arch "${FLATPAK_ARCH}"
       - install -Dm755 bin/linux/hue-lighter /app/bin/hue-lighter
       - install -Dm644 build/flatpak/${FLATPAK_ID}.desktop /app/share/applications/${FLATPAK_ID}.desktop
       - install -Dm644 build/flatpak/${FLATPAK_ID}.metainfo.xml /app/share/metainfo/${FLATPAK_ID}.metainfo.xml
