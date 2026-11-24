@@ -217,7 +217,7 @@ jobs:
         run: npx --yes $(printf -- '-p %s ' ${SEMANTIC_RELEASE_PACKAGES}) semantic-release
 
   tap:
-    name: Update Homebrew tap
+    name: Release to Homebrew tap
     needs: [version, release]
     runs-on: ubuntu-latest
     # Holds TAP_GITHUB_TOKEN; configure required reviewers in the repo settings.
@@ -256,3 +256,25 @@ jobs:
           git add Casks/hue-lighter.rb
           git commit -m "hue-lighter ${VERSION}"
           git push origin HEAD
+
+  release-flatpak:
+    name: Release Flatpak
+    needs: [version, release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.CI_DIST_APP_ID }}
+          private-key: ${{ secrets.CI_DIST_APP_PRIVATE_KEY }}
+          owner: yveskaufmann
+          repositories: flatpak-repo
+
+      - name: Build and release Flatpak
+        env:
+          GH_TOKEN: ${{  steps.app-token.outputs.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          gh workflow run publish-flatpak-bundle.yml -R yveskaufmann/flatpak-repo \
+            -f repo="yveskaufmann/hue-lighter" -f version="${VERSION}"
